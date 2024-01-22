@@ -1,0 +1,17 @@
+# General Python ignores
+*.py[cod]
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.idea/
+*.swp
+
+# Environment variables
+.env
+
+# Other common ignores
+.DS_Store
+Thumbs.db

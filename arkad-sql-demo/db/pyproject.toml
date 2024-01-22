@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "db"
+version = "0.1.0"
+description = ""
+authors = ["olegDk <oleg.davydiuk1995@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+psycopg2-binary = "^2.9.9"
+yfinance = "^0.2.35"
+python-dotenv = "^1.0.0"
+schedule = "^1.2.1"
+pandas = "^2.2.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

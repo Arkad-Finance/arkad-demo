@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "streamlit-app"
+version = "0.1.0"
+description = ""
+authors = ["olegDk <oleg.davydiuk1995@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+sql-market-agent = {path = "/app/sql-market-agent", develop = true}
+streamlit = "^1.29.0"
+numexpr = "^2.8.7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
