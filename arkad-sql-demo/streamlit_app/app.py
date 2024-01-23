@@ -4,7 +4,6 @@ from sql_market_agent.agent.agent import create_openai_sql_market_agent
 from langchain_community.callbacks import StreamlitCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
 from dotenv import load_dotenv
-import os
 import logging
 
 # Setup basic logging
@@ -19,7 +18,6 @@ logging.info("Started streamlit server...")
 
 load_dotenv()
 
-openai_api_key = os.environ.get("OPENAI_API_KEY")
 
 agent_executor = create_openai_sql_market_agent(stocks=["CAT", "NKE"])
 
@@ -68,11 +66,7 @@ with st.form(key="prompt_selection"):
     if st.form_submit_button("Submit Predefined Prompt"):
         st.session_state.messages.append(HumanMessage(content=selected_prompt))
         st_callback_answer_container = st.empty()
-        # st_chat_stream_callback_answer_container = st.empty()
         st_callback = StreamlitCallbackHandler(st_callback_answer_container)
-        # st_chat_stream_callback = StreamlitStreamHandler(
-        #     st_chat_stream_callback_answer_container
-        # )
         response = agent_executor(
             {"input": selected_prompt, "chat_history": st.session_state.messages},
             callbacks=[st_callback],
@@ -89,14 +83,11 @@ if user_input := st.chat_input():
     st.chat_message("user").write(user_input)
     with st.chat_message("assistant"):
         st_callback_answer_container = st.empty()
-        # st_chat_stream_callback_answer_container = st.empty()
         st_callback = StreamlitCallbackHandler(st_callback_answer_container)
-        # st_chat_stream_callback = StreamlitStreamHandler(
-        #     st_chat_stream_callback_answer_container
-        # )
         response = agent_executor(
             {"input": user_input, "chat_history": st.session_state.messages},
             callbacks=[st_callback],
         )
-        st.session_state.messages.append(AIMessage(content=response["output"]))
-        st.write(response["output"])
+        response = str(response["output"]).replace("$", "\$")
+        st.session_state.messages.append(AIMessage(content=response))
+        st.write(response)

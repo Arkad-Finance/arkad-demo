@@ -547,13 +547,13 @@ six = ">=1.5"
 
 [[package]]
 name = "python-dotenv"
-version = "1.0.0"
+version = "1.0.1"
 description = "Read key-value pairs from a .env file and set them as environment variables"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "python-dotenv-1.0.0.tar.gz", hash = "sha256:a8df96034aae6d2d50a4ebe8216326c61c3eb64836776504fcca410e5937a3ba"},
-    {file = "python_dotenv-1.0.0-py3-none-any.whl", hash = "sha256:f5971a9226b701070a4bf2c38c89e5a3f0d64de8debda981d1db98583009122a"},
+    {file = "python-dotenv-1.0.1.tar.gz", hash = "sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca"},
+    {file = "python_dotenv-1.0.1-py3-none-any.whl", hash = "sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a"},
 ]
 
 [package.extras]
@@ -664,13 +664,13 @@ files = [
 
 [[package]]
 name = "yfinance"
-version = "0.2.35"
+version = "0.2.36"
 description = "Download market data from Yahoo! Finance API"
 optional = false
 python-versions = "*"
 files = [
-    {file = "yfinance-0.2.35-py2.py3-none-any.whl", hash = "sha256:f3d15cbf06fadd06c607520f70c54cbae4560a99675307ee2383d000232614f8"},
-    {file = "yfinance-0.2.35.tar.gz", hash = "sha256:bfd5102cc9e5aa259c26b86fb53c2abe9e05ff63d387c03adf0b4ff2f6f2375a"},
+    {file = "yfinance-0.2.36-py2.py3-none-any.whl", hash = "sha256:700f8b8fb51d4f7ca31bcef042175be68b2f39ed680a99170163e5f54874e2a6"},
+    {file = "yfinance-0.2.36.tar.gz", hash = "sha256:5367c0538cf57bb0dd393ca24866cda1ab5d4aba47e375e549760652a4a19fc2"},
 ]
 
 [package.dependencies]

@@ -51,11 +51,13 @@ def init_db(stocks: List = None) -> SQLDatabase:
         )
     run_disc_fetch_job(stocks=stocks)
     db_path = Path(__file__).parent / "storage/StockData.db"
-    return SQLDatabase.from_uri(db_path)
+    return SQLDatabase.from_uri(f"sqlite:///{db_path}")
 
 
-def get_sql_database_tool(stocks: List = None) -> Tool:
-    llm = ChatOpenAI(temperature=0, model="gpt-4", streaming=True)
+def get_sql_database_tool(stocks: List = None, openai_api_key: str = None) -> Tool:
+    llm = ChatOpenAI(
+        temperature=0, model="gpt-4", streaming=True, api_key=openai_api_key
+    )
     db = init_db(stocks=stocks)
     schema_to_insert = db.get_table_info()
     sql_prefix = SQL_PREFIX.replace("{schema}", schema_to_insert)
@@ -75,7 +77,8 @@ def get_sql_database_tool(stocks: List = None) -> Tool:
         description="Useful when you need to answer questions about data in database, but only when there are no other tools to answer this question. "
         "You must use this tool only if there is no other tool for answering this specific question about data in database "
         "where there is information about US stocks symbols, sectors, OHLC data and %DailyChange data. "
-        "Input should be in the form of a question containing full context. Do not use this tool if you have an answer in chat history.",
+        "Input should be in the form of a question containing full context. Do not use this tool if you have an answer in chat history. "
+        "If there is no data available for given query - say I don't know and never hallucinate!",
     )
 
     return sql_database_tool

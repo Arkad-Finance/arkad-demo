@@ -18,10 +18,10 @@ from langchain_openai.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.schema.messages import AIMessage, HumanMessage
 from langchain_community.tools.render import format_tool_to_openai_function
-from sql_market_agent.agent.tools.tools import TavilySearchTool, CalculatorTool
+from sql_market_agent.agent.tools.tools import get_tavily_search_tool, CalculatorTool
 from sql_market_agent.agent.tools.datetime_tools import DateTool
 from sql_market_agent.agent.tools.sql_tools import get_sql_database_tool
-from sql_market_agent.agent.tools.alpha_vantage_tools import CompanyOverviewTool
+from sql_market_agent.agent.tools.company_overview_tools import CompanyOverviewTool
 from dotenv import load_dotenv
 import logging
 
@@ -35,29 +35,52 @@ logging.basicConfig(
 load_dotenv()
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
 
-openai.api_key = OPENAI_API_KEY
 
-
-def get_tools(stocks: List = None) -> List:
+def get_tools(
+    stocks: List = None, tavily_api_key: str = None, openai_api_key: str = None
+) -> List:
     date_tool = DateTool()
     calculator_tool = CalculatorTool()
     company_overview_tool = CompanyOverviewTool()
-    tavily_search_tool = TavilySearchTool()
-    sql_database_tool = get_sql_database_tool(stocks=stocks)
+    tools = [date_tool, calculator_tool, company_overview_tool]
 
-    return [
-        date_tool,
-        calculator_tool,
-        company_overview_tool,
-        tavily_search_tool,
-        sql_database_tool,
-    ]
+    tavily_api_key = tavily_api_key or TAVILY_API_KEY
+    if tavily_api_key:
+        tavily_search_tool = get_tavily_search_tool(tavily_api_key=tavily_api_key)
+        tools.append(tavily_search_tool)
+    else:
+        logging.info(
+            msg="tavily_tool initialization failed, please provide Tavily API key"
+        )
+    sql_database_tool = get_sql_database_tool(
+        stocks=stocks, openai_api_key=openai_api_key
+    )
+
+    tools.append(sql_database_tool)
+
+    return tools
 
 
 def create_openai_sql_market_agent(
-    stocks: Union[List[str], List[Dict[str, str]]] = None
+    openai_api_key: str = None,
+    tavily_api_key: str = None,
+    stocks: Union[List[str], List[Dict[str, str]]] = None,
 ) -> AgentExecutor:
+    # Choose the API key provided as an argument or fall back to the global variable
+    openai_api_key = openai_api_key or OPENAI_API_KEY
+
+    # Check if an OpenAI API key is available
+    if not openai_api_key:
+        logging.error(
+            "AgentExecutor initialization failed, please provide OpenAI API key"
+        )
+        return None
+
+    # Set the API key for OpenAI
+    openai.api_key = openai_api_key
+
     # Check if stocks is a list of strings
     if stocks and all(isinstance(stock, str) for stock in stocks):
         stocks = [{"ticker": stock, "sector": ""} for stock in stocks]
@@ -76,10 +99,12 @@ def create_openai_sql_market_agent(
         )
         return None  # Or raise an exception, or handle this case as you see fit
 
-    logging.info(f"Stocks: {stocks}")
-    logging.info(msg=f"Stocks: {stocks}")
-    tools = get_tools(stocks=stocks)
-    llm = ChatOpenAI(temperature=0, model="gpt-4", streaming=True)
+    tools = get_tools(
+        stocks=stocks, tavily_api_key=tavily_api_key, openai_api_key=openai_api_key
+    )
+    llm = ChatOpenAI(
+        temperature=0, model="gpt-4", streaming=True, api_key=openai_api_key
+    )
     assistant_system_message = """You are a helpful assistant. \
         Use tools (only if necessary) to best answer the users questions."""
     prompt = ChatPromptTemplate.from_messages(
