@@ -1,7 +1,6 @@
 from pathlib import Path
-import os
 from langchain.sql_database import SQLDatabase
-from langchain_openai.chat_models import ChatOpenAI
+from langchain_core.language_models import BaseLanguageModel
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 from langchain_experimental.autonomous_agents import AutoGPT
@@ -12,13 +11,7 @@ from sql_market_agent.agent.tools.prompts.sql_prompts import (
     SQL_PREFIX,
     SQL_SUFFIX,
 )
-from dotenv import load_dotenv
-from sql_market_agent.agent.tools.storage.db_fetcher import (
-    run_fetch_job as run_db_fetch_job,
-)
-from sql_market_agent.agent.tools.storage.disc_fetcher import (
-    run_fetch_job as run_disc_fetch_job,
-)
+from sql_market_agent.agent.tools.storage.db_fetcher import run_fetch_job
 from typing import List
 import logging
 
@@ -28,37 +21,39 @@ logging.basicConfig(
 )
 
 
-load_dotenv()
-
-DB_HOST = os.getenv("POSTGRES_HOST", "localhost")
-DB_PORT = os.getenv("POSTGRES_PORT", "5432")
-DB_NAME = os.environ.get("POSTGRES_DB")
-DB_USER = os.environ.get("POSTGRES_USER")
-DB_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
-
-
-def env_vars_set() -> bool:
-    """Check if all required environment variables are set."""
-    required_vars = [DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD]
-    return all(required_vars)
-
-
-def init_db(stocks: List = None) -> SQLDatabase:
-    if env_vars_set():
-        run_db_fetch_job(stocks=stocks)
-        return SQLDatabase.from_uri(
-            f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+def get_database(
+    db_connection_string: str = None,
+    preinitialize_database: bool = False,
+    stocks: List = None,
+) -> SQLDatabase:
+    if not db_connection_string:
+        logging.info(f"DB connection string not provided, using local db on disc...")
+        db_connection_string = (
+            f"sqlite:///{Path(__file__).parent / 'storage/StockData.db'}"
         )
-    run_disc_fetch_job(stocks=stocks)
-    db_path = Path(__file__).parent / "storage/StockData.db"
-    return SQLDatabase.from_uri(f"sqlite:///{db_path}")
 
-
-def get_sql_database_tool(stocks: List = None, openai_api_key: str = None) -> Tool:
-    llm = ChatOpenAI(
-        temperature=0, model="gpt-4", streaming=True, api_key=openai_api_key
+    run_fetch_job(
+        stocks=stocks,
+        db_connection_string=db_connection_string,
+        preinitialize_database=preinitialize_database,
     )
-    db = init_db(stocks=stocks)
+    logging.info(f"Connecting to db for sql agent...")
+    db = SQLDatabase.from_uri(db_connection_string)
+    logging.info(f"Connected to db for sql agent successfully")
+    return db
+
+
+def get_sql_database_tool(
+    llm: BaseLanguageModel,
+    db_connection_string: str = None,
+    preinitialize_database: bool = True,
+    stocks: List = None,
+) -> Tool:
+    db = get_database(
+        db_connection_string=db_connection_string,
+        preinitialize_database=preinitialize_database,
+        stocks=stocks,
+    )
     schema_to_insert = db.get_table_info()
     sql_prefix = SQL_PREFIX.replace("{schema}", schema_to_insert)
     toolkit = SQLDatabaseToolkit(db=db, llm=llm)

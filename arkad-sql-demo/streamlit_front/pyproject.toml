@@ -1,19 +1,16 @@
 [tool.poetry]
-name = "db"
+name = "streamlit-front"
 version = "0.1.0"
 description = ""
 authors = ["olegDk <oleg.davydiuk1995@gmail.com>"]
+license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-psycopg2-binary = "^2.9.9"
-yfinance = "^0.2.35"
-python-dotenv = "^1.0.0"
-schedule = "^1.2.1"
-pandas = "^2.2.0"
-sqlalchemy = "^2.0.25"
-
+sql-market-agent = {path = "../sql-market-agent"}
+streamlit = "^1.29.0"
+numexpr = "^2.8.7"
 
 [build-system]
 requires = ["poetry-core"]

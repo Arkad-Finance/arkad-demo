@@ -1,161 +1,189 @@
-# fetch_data.py
 import yfinance as yf
 import pandas as pd
-import psycopg2
+import sqlalchemy
 import os
 import json
 import logging
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
+from typing import List, Dict
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy import text, insert, select
+from sqlalchemy.dialects.postgresql import insert as insert_postgres
+from pathlib import Path
 import traceback
-import time
-from typing import Union, List, Dict
-
 
 # Setup basic logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-load_dotenv()
 
-# Database configuration
-DB_HOST = os.getenv("POSTGRES_HOST", "localhost")
-DB_PORT = os.getenv("POSTGRES_PORT", "5432")
-DB_NAME = os.environ.get("POSTGRES_DB")
-DB_USER = os.environ.get("POSTGRES_USER")
-DB_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
+def initialize_database(engine: sqlalchemy.engine.Engine, db_type: str):
+    init_script_path = os.path.join(os.path.dirname(__file__), f"init_{db_type}_db.sql")
+    with open(init_script_path, "r") as f:
+        raw_sql = f.read()
 
-
-def connect_to_database(
-    attempts: int = 5, delay: int = 10
-) -> psycopg2.extensions.connection:
-    for attempt in range(attempts):
-        try:
-            conn = psycopg2.connect(
-                dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST
-            )
-            logging.info("Database connection established.")
-            return conn
-        except psycopg2.OperationalError as e:
-            logging.warning(
-                f"Attempt {attempt + 1} failed to connect to the database: {e}"
-            )
-            if attempt < attempts - 1:
-                logging.info(f"Retrying in {delay} seconds...")
-                time.sleep(delay)
+    try:
+        with engine.begin() as conn:  # This ensures a transaction is started
+            if db_type == "sqlite":
+                sql_statements = raw_sql.split(";")
+                for statement in sql_statements:
+                    if statement.strip():
+                        conn.execute(sqlalchemy.text(statement))
             else:
-                logging.error("All attempts to connect to the database have failed.")
-                raise
+                conn.execute(sqlalchemy.text(raw_sql))
+        logging.info(f"Database ({db_type}) initialized.")
+    except Exception as e:
+        logging.error(f"An error occurred while initializing the database: {e}")
 
 
-# Function to fetch data from Yahoo Finance
+def connect_to_database(db_connection_string: str) -> sqlalchemy.engine.Engine:
+    return create_engine(db_connection_string)
+
+
 def fetch_stock_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
     stock = yf.Ticker(symbol)
-    df = stock.history(start=start_date, end=end_date)
-    return df
+    return stock.history(start=start_date, end=end_date)
 
 
-# Function to calculate daily change percentage
 def calculate_daily_change(current_close: float, previous_close: float) -> float:
-    if previous_close is not None:
-        return (current_close - previous_close) / previous_close * 100
-    return None
+    return (
+        (current_close - previous_close) / previous_close * 100
+        if previous_close is not None
+        else None
+    )
 
 
-# Function to get the last date for a specific stock
-def get_last_date_for_stock(cursor: psycopg2.extensions.cursor, symbol: str) -> str:
-    cursor.execute("SELECT MAX(Date) FROM StockData WHERE Symbol = %s", (symbol,))
-    last_date = cursor.fetchone()[0]
+def get_last_date_for_stock(session: sqlalchemy.orm.Session, symbol: str) -> str:
+    result = session.execute(
+        text("SELECT MAX(Date) FROM StockData WHERE Symbol = :symbol"),
+        {"symbol": symbol},
+    ).fetchone()
+    last_date = None
+    if result:
+        last_date = (
+            datetime.strptime(result[0], "%Y-%m-%d").date()
+            if isinstance(result[0], str)
+            else result[0]
+        )
+
     return last_date
 
 
-# Function to read stocks from a JSON file
-def read_stocks_from_json(file_path: str) -> Union[List, Dict]:
+def get_last_close_for_stock(
+    session: sqlalchemy.orm.Session, stock_table: sqlalchemy.Table, symbol: str
+) -> float:
+    last_close_query = (
+        select(stock_table.c.close)
+        .where(stock_table.c.symbol == symbol)
+        .order_by(stock_table.c.date.desc())
+        .limit(1)
+    )
+    result = session.execute(last_close_query).fetchone()
+    return result[0] if result else None
+
+
+def fetch_and_insert_data(
+    session: sqlalchemy.orm.Session, stocks: List[Dict[str, str]]
+):
+    stock_table = sqlalchemy.Table(
+        "stockdata", sqlalchemy.MetaData(), autoload_with=session.bind
+    )
+
+    for stock in stocks:
+        symbol = stock["ticker"]
+        sector = stock["sector"]
+        last_date = get_last_date_for_stock(session, symbol)
+        start_date = (
+            (last_date + timedelta(days=1))
+            if last_date
+            else (datetime.now() - timedelta(days=30)).date()
+        )
+        end_date = datetime.now().date()
+        if start_date < end_date:
+            stock_data = fetch_stock_data(
+                symbol, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
+            )
+
+            prev_close = get_last_close_for_stock(session, stock_table, symbol)
+            data_to_insert = []
+            for index, row in stock_data.iterrows():
+                daily_change = calculate_daily_change(row["Close"], prev_close)
+                prev_close = row["Close"]
+                if daily_change is not None:
+                    data_to_insert.append(
+                        {
+                            "symbol": symbol,
+                            "sector": sector,
+                            "date": index.strftime("%Y-%m-%d"),
+                            "open": row["Open"],
+                            "high": row["High"],
+                            "low": row["Low"],
+                            "close": row["Close"],
+                            "volume": row["Volume"],
+                            "dailychangepercent": daily_change,
+                        }
+                    )
+
+            if session.bind.dialect.name == "postgresql":
+                statement = (
+                    insert_postgres(stock_table)
+                    .values(data_to_insert)
+                    .on_conflict_do_nothing()
+                )
+            elif session.bind.dialect.name == "sqlite":
+                statement = (
+                    insert(stock_table).values(data_to_insert).prefix_with("OR IGNORE")
+                )
+
+            session.execute(statement)
+            session.commit()
+
+
+def read_stocks_from_json(file_path: str) -> json:
     with open(file_path, "r") as file:
         return json.load(file)
 
 
-# Function to fetch and insert data
-def fetch_and_insert_data(cursor: psycopg2.extensions.cursor, stocks):
-    insert_query = (
-        "INSERT INTO StockData (Symbol, Sector, Date, Open, High, Low, "
-        "Close, Volume, DailyChangePercent) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    )
-    for stock in stocks:
-        symbol = stock["ticker"]
-        sector = stock["sector"]
-
-        last_date = get_last_date_for_stock(cursor, symbol)
-        start_date = (
-            (last_date + timedelta(days=1))
-            if last_date
-            else datetime.now() - timedelta(days=30)
-        ).strftime("%Y-%m-%d")
-        end_date = datetime.now().strftime("%Y-%m-%d")
-
-        if not start_date == end_date:
-            stock_data = fetch_stock_data(symbol, start_date, end_date)
-
-            # Prepare data for bulk insert
-            data_to_insert = []
-            # Get the last available closing price for this stock
-            cursor.execute(
-                "SELECT Close FROM StockData WHERE Symbol = %s ORDER BY Date DESC LIMIT 1",
-                (symbol,),
-            )
-            result = cursor.fetchone()
-            prev_close = result[0] if result else None
-
-            for index, row in stock_data.iterrows():
-                date = index.strftime("%Y-%m-%d")
-                open_price, high, low, close, volume = (
-                    row["Open"],
-                    row["High"],
-                    row["Low"],
-                    row["Close"],
-                    row["Volume"],
-                )
-                daily_change_percent = calculate_daily_change(close, prev_close)
-                if daily_change_percent is not None:
-                    data_to_insert.append(
-                        (
-                            symbol,
-                            sector,
-                            date,
-                            open_price,
-                            high,
-                            low,
-                            close,
-                            volume,
-                            daily_change_percent,
-                        )
-                    )
-
-                prev_close = close
-
-            # Insert all rows in one go
-            cursor.executemany(insert_query, data_to_insert)
-
-
-def run_fetch_job(stocks: List = None):
+def run_fetch_job(
+    db_connection_string: str,
+    preinitialize_database: bool = False,
+    stocks: List[Dict[str, str]] = None,
+):
+    session = None
     try:
-        logging.info("Establishing database connection...")
-        conn = connect_to_database()
-        cursor = conn.cursor()
+        engine = connect_to_database(db_connection_string)
+        db_type = "sqlite" if "sqlite" in db_connection_string else "postgres"
+        if preinitialize_database:
+            logging.info("Initializing database with StockData table...")
+            initialize_database(engine, db_type)
 
+        Session = sessionmaker(bind=engine)
+        session = Session()
         logging.info("Fetching data for analysis...")
-        if not stocks:
-            stocks = read_stocks_from_json("stocks.json")
-        fetch_and_insert_data(cursor, stocks)
-        logging.info("Data fetched and inserted successfully...")
-        conn.commit()
-    except (Exception, psycopg2.DatabaseError) as error:
+
+        if (
+            preinitialize_database and not stocks
+        ):  # If preinitializing database - it must have at least some data.
+            # If no stocks passed - read from json
+            stocks_json_path = Path(__file__).parent / "stocks.json"
+            stocks = read_stocks_from_json(stocks_json_path)
+            logging.info(
+                f"No stocks provided. Will use default stocks from internal stocks.json.: {stocks[0:2]}\n..."
+            )
+
+        if stocks:
+            fetch_and_insert_data(session, stocks)
+            logging.info("Data fetched and inserted successfully.")
+        else:
+            logging.info(
+                "Preinitialize set to False and no stocks provided, using database as is"
+            )
+    except (Exception, OperationalError) as error:
         logging.error(f"Database error: {error}")
         traceback.print_exc()
-        if conn:
-            conn.rollback()
     finally:
-        if conn:
-            conn.close()
-            logging.info("Database connection closed.")
+        if session:
+            session.close()

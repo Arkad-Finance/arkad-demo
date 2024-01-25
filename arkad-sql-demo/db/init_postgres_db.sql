@@ -12,5 +12,6 @@ CREATE TABLE IF NOT EXISTS StockData (
     Low REAL NOT NULL,
     Close REAL NOT NULL,
     Volume INTEGER NOT NULL,
-    DailyChangePercent REAL NOT NULL
+    DailyChangePercent REAL NOT NULL,
+    UNIQUE (Symbol, Date)  -- Adding a unique constraint
 );

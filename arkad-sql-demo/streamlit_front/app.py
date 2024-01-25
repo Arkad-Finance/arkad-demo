@@ -35,12 +35,15 @@ openai.api_key = OPENAI_API_KEY
 
 llm = ChatOpenAI(temperature=0, model="gpt-4", streaming=True)
 
-db_connection_string = (
-    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-)
+# Create postgres connection string:
+# db_connection_string = (
+#     f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+# )
 agent_executor = create_sql_market_agent(
     llm=llm,
-    db_connection_string=db_connection_string,
+    # db_connection_string=db_connection_string,
+    preinitialize_database=True,
+    stocks=["CAT", "NKE", "XOM"],
 )
 
 # Predefined prompts

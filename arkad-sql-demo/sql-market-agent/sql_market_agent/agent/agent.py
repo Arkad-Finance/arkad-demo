@@ -10,13 +10,11 @@ project_root = os.path.dirname(current_dir)
 # Append the project root to the system path
 sys.path.append(project_root)
 
-import openai
 from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad import format_to_openai_function_messages
 from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
-from langchain_openai.chat_models import ChatOpenAI
+from langchain_core.language_models import BaseLanguageModel
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.schema.messages import AIMessage, HumanMessage
 from langchain_community.tools.render import format_tool_to_openai_function
 from sql_market_agent.agent.tools.tools import get_tavily_search_tool, CalculatorTool
 from sql_market_agent.agent.tools.datetime_tools import DateTool
@@ -34,12 +32,15 @@ logging.basicConfig(
 
 load_dotenv()
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
 
 
 def get_tools(
-    stocks: List = None, tavily_api_key: str = None, openai_api_key: str = None
+    llm: BaseLanguageModel,
+    db_connection_string: str = None,
+    preinitialize_database: bool = False,
+    stocks: List = None,
+    tavily_api_key: str = None,
 ) -> List:
     date_tool = DateTool()
     calculator_tool = CalculatorTool()
@@ -55,7 +56,10 @@ def get_tools(
             msg="tavily_tool initialization failed, please provide Tavily API key"
         )
     sql_database_tool = get_sql_database_tool(
-        stocks=stocks, openai_api_key=openai_api_key
+        llm=llm,
+        db_connection_string=db_connection_string,
+        preinitialize_database=preinitialize_database,
+        stocks=stocks,
     )
 
     tools.append(sql_database_tool)
@@ -63,24 +67,13 @@ def get_tools(
     return tools
 
 
-def create_openai_sql_market_agent(
-    openai_api_key: str = None,
-    tavily_api_key: str = None,
+def create_sql_market_agent(
+    llm: BaseLanguageModel,
+    db_connection_string: str = None,
+    preinitialize_database: bool = False,
     stocks: Union[List[str], List[Dict[str, str]]] = None,
+    tavily_api_key: str = None,
 ) -> AgentExecutor:
-    # Choose the API key provided as an argument or fall back to the global variable
-    openai_api_key = openai_api_key or OPENAI_API_KEY
-
-    # Check if an OpenAI API key is available
-    if not openai_api_key:
-        logging.error(
-            "AgentExecutor initialization failed, please provide OpenAI API key"
-        )
-        return None
-
-    # Set the API key for OpenAI
-    openai.api_key = openai_api_key
-
     # Check if stocks is a list of strings
     if stocks and all(isinstance(stock, str) for stock in stocks):
         stocks = [{"ticker": stock, "sector": ""} for stock in stocks]
@@ -94,16 +87,17 @@ def create_openai_sql_market_agent(
 
     else:
         # Handle the case where stocks is not in one of the expected formats
-        logging.error(
-            "Invalid format for stocks. Expected a list of strings or a list of dictionaries with 'ticker' and 'sector' keys."
+        logging.warn(
+            "Invalid format for stocks. Expected a list of strings or a list of dictionaries with 'ticker' and 'sector' keys. "
+            "Will use default stocks from internal stocks.json."
         )
-        return None  # Or raise an exception, or handle this case as you see fit
 
     tools = get_tools(
-        stocks=stocks, tavily_api_key=tavily_api_key, openai_api_key=openai_api_key
-    )
-    llm = ChatOpenAI(
-        temperature=0, model="gpt-4", streaming=True, api_key=openai_api_key
+        llm=llm,
+        db_connection_string=db_connection_string,
+        preinitialize_database=preinitialize_database,
+        stocks=stocks,
+        tavily_api_key=tavily_api_key,
     )
     assistant_system_message = """You are a helpful assistant. \
         Use tools (only if necessary) to best answer the users questions."""
