@@ -12,7 +12,7 @@ from sql_market_agent.agent.tools.prompts.sql_prompts import (
     SQL_SUFFIX,
 )
 from sql_market_agent.agent.tools.storage.db_fetcher import run_fetch_job
-from typing import List
+from typing import List, Dict
 import logging
 
 # Setup basic logging
@@ -24,7 +24,7 @@ logging.basicConfig(
 def get_database(
     db_connection_string: str = None,
     preinitialize_database: bool = False,
-    stocks: List = None,
+    stocks: List[Dict[str, str]] = None,
 ) -> SQLDatabase:
     if not db_connection_string:
         logging.info(f"DB connection string not provided, using local db on disc...")
@@ -47,7 +47,7 @@ def get_sql_database_tool(
     llm: BaseLanguageModel,
     db_connection_string: str = None,
     preinitialize_database: bool = True,
-    stocks: List = None,
+    stocks: List[Dict[str, str]] = None,
 ) -> Tool:
     db = get_database(
         db_connection_string=db_connection_string,

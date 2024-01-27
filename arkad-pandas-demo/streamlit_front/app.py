@@ -3,22 +3,17 @@ import streamlit as st
 import openai
 from langchain.schema import HumanMessage, AIMessage
 from langchain_openai.chat_models import ChatOpenAI
-from sql_market_agent.agent.agent import create_sql_market_agent
+from pandas_market_agent.agent.agent import create_pandas_market_agent
 from langchain_community.callbacks import StreamlitCallbackHandler
-from langchain.callbacks.base import BaseCallbackHandler
 from dotenv import load_dotenv
 import logging
 
 load_dotenv()
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-DB_HOST = os.getenv("POSTGRES_HOST", "localhost")
-DB_PORT = os.getenv("POSTGRES_PORT", "5432")
-DB_NAME = os.environ.get("POSTGRES_DB")
-DB_USER = os.environ.get("POSTGRES_USER")
-DB_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
 
 # Setup basic logging
+# Configure logging to file
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -31,17 +26,17 @@ load_dotenv()
 
 openai.api_key = OPENAI_API_KEY
 
+st.set_page_config(page_title="Arkad", layout="wide")
 
-llm = ChatOpenAI(temperature=0, model="gpt-4", streaming=True)
 
-# Create postgres connection string:
-# db_connection_string = (
-#     f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-# )
-agent_executor = create_sql_market_agent(
+llm = ChatOpenAI(
+    temperature=0,
+    model="gpt-4",
+    streaming=True,
+)
+
+agent_executor = create_pandas_market_agent(
     llm=llm,
-    # db_connection_string=db_connection_string,
-    preinitialize_database=True,
     stocks=["CAT", "NKE", "XOM"],
 )
 
@@ -51,7 +46,6 @@ SAVED_SESSIONS = [
     "Compare Disney's profit margin with Nvidia's",
     "Tell me latest M&A deals",
 ]
-
 
 # Initialize session state for messages if not already present
 if "messages" not in st.session_state:
@@ -69,8 +63,6 @@ def display_chat():
         else:
             st.chat_message("assistant").write(msg.content)
 
-
-st.set_page_config(page_title="Arkad", layout="wide")
 
 # Predefined prompts selection
 with st.form(key="prompt_selection"):

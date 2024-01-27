@@ -8,7 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-sql-market-agent = {path = "../sql-market-agent", develop = true}
+pandas-market-agent = {path = "../pandas-market-agent", develop = true}
 streamlit = "^1.29.0"
 numexpr = "^2.8.7"
 

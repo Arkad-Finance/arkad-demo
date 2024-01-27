@@ -16,14 +16,15 @@ from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain_core.language_models import BaseLanguageModel
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.tools.render import format_tool_to_openai_function
-from sql_market_agent.agent.tools.tools import get_tavily_search_tool, CalculatorTool
-from sql_market_agent.agent.tools.datetime_tools import DateTool
-from sql_market_agent.agent.tools.sql_tools import get_sql_database_tool
-from sql_market_agent.agent.tools.company_overview_tools import CompanyOverviewTool
+from pandas_market_agent.agent.tools.tools import get_tavily_search_tool, CalculatorTool
+from pandas_market_agent.agent.tools.datetime_tools import DateTool
+from pandas_market_agent.agent.tools.pandas_tools import PandasTool
+from pandas_market_agent.agent.tools.company_overview_tools import CompanyOverviewTool
 from dotenv import load_dotenv
 import logging
 
 # Setup basic logging
+# Configure logging to file
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -36,8 +37,6 @@ TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
 
 def get_tools(
     llm: BaseLanguageModel,
-    db_connection_string: str = None,
-    preinitialize_database: bool = False,
     stocks: List[Dict[str, str]] = None,
     tavily_api_key: str = None,
 ) -> List:
@@ -54,22 +53,15 @@ def get_tools(
         logging.info(
             msg="tavily_tool initialization failed, please provide Tavily API key"
         )
-    sql_database_tool = get_sql_database_tool(
-        llm=llm,
-        db_connection_string=db_connection_string,
-        preinitialize_database=preinitialize_database,
-        stocks=stocks,
-    )
+    pandas_tool = PandasTool(llm=llm, stocks=stocks)
 
-    tools.append(sql_database_tool)
+    tools.append(pandas_tool)
 
     return tools
 
 
-def create_sql_market_agent(
+def create_pandas_market_agent(
     llm: BaseLanguageModel,
-    db_connection_string: str = None,
-    preinitialize_database: bool = False,
     stocks: Union[List[str], List[Dict[str, str]]] = None,
     tavily_api_key: str = None,
 ) -> AgentExecutor:
@@ -93,8 +85,6 @@ def create_sql_market_agent(
 
     tools = get_tools(
         llm=llm,
-        db_connection_string=db_connection_string,
-        preinitialize_database=preinitialize_database,
         stocks=stocks,
         tavily_api_key=tavily_api_key,
     )

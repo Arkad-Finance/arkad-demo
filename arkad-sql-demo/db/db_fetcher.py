@@ -95,6 +95,8 @@ def fetch_and_insert_data(
     for stock in stocks:
         symbol = stock["ticker"]
         sector = stock["sector"]
+        if not sector:
+            sector = yf.Ticker(symbol).get_info().get("industry", "")
         last_date = get_last_date_for_stock(session, symbol)
         start_date = (
             (last_date + timedelta(days=1))

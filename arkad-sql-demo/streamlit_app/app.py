@@ -19,7 +19,6 @@ DB_USER = os.environ.get("POSTGRES_USER")
 DB_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
 
 # Setup basic logging
-# Configure logging to file
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -49,16 +48,6 @@ SAVED_SESSIONS = [
     "Compare Disney's profit margin with Nvidia's",
     "Tell me latest M&A deals",
 ]
-
-
-class StreamlitStreamHandler(BaseCallbackHandler):
-    def __init__(self, container, initial_text=""):
-        self.container = container
-        self.text = initial_text
-
-    def on_llm_new_token(self, token: str, **kwargs) -> None:
-        self.text += token
-        self.container.markdown(self.text)
 
 
 # Initialize session state for messages if not already present
