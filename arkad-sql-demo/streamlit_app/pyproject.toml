@@ -4,7 +4,6 @@ version = "0.1.0"
 description = ""
 authors = ["olegDk <oleg.davydiuk1995@gmail.com>"]
 license = "MIT"
-readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
