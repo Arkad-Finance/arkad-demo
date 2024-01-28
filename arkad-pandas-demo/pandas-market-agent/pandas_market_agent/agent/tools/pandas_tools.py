@@ -11,11 +11,12 @@ from langchain.schema.document import Document
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores.chroma import Chroma
 from langchain.callbacks.manager import (
-    AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
 )
 from pydantic.v1 import BaseModel, Field
 from pandas_market_agent.agent.tools.storage.data_fetcher import run_fetch_job
+from pandas_market_agent.agent.tools.prompts.pandas_prompts import PREFIX
+
 
 # Setup basic logging
 logging.basicConfig(
@@ -55,7 +56,9 @@ class PandasTool(BaseTool):
         self.stocks = stocks
         self.sectors_data = run_fetch_job(stocks=self.stocks)
         self.sector_dfs_agents = [
-            create_pandas_dataframe_agent(llm=self.llm, df=sector_data["data"])
+            create_pandas_dataframe_agent(
+                llm=self.llm, df=sector_data["data"], prefix=PREFIX
+            )
             for sector_data in self.sectors_data
         ]
 
