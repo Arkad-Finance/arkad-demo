@@ -73,6 +73,12 @@ def create_sql_market_agent(
     stocks: Union[List[str], List[Dict[str, str]]] = None,
     tavily_api_key: str = None,
 ) -> AgentExecutor:
+    # Not proceeding if db_connection_string is None and preinitialize_database is False
+    if db_connection_string is None and not preinitialize_database:
+        raise ValueError(
+            "A database connection string must be provided or the preinitialize_database must be set to True."
+        )
+
     # Check if stocks is a list of strings
     if stocks and all(isinstance(stock, str) for stock in stocks):
         stocks = [{"ticker": stock, "sector": ""} for stock in stocks]
