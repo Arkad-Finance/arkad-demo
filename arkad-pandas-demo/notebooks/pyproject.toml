@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "notebooks"
+version = "0.1.0"
+description = ""
+authors = ["olegDk <oleg.davydiuk1995@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas-market-agent = {path = "../pandas-market-agent", develop = true}
+numexpr = "^2.8.7"
+ipykernel = "^6.29.0"
+matplotlib = "^3.8.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

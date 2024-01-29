@@ -16,7 +16,11 @@ from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain_core.language_models import BaseLanguageModel
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.tools.render import format_tool_to_openai_function
-from sql_market_agent.agent.tools.tools import get_tavily_search_tool, CalculatorTool
+from sql_market_agent.agent.tools.tools import (
+    get_tavily_search_tool,
+    CalculatorTool,
+    PythonREPLTool,
+)
 from sql_market_agent.agent.tools.datetime_tools import DateTool
 from sql_market_agent.agent.tools.sql_tools import get_sql_database_tool
 from sql_market_agent.agent.tools.company_overview_tools import CompanyOverviewTool
@@ -43,8 +47,10 @@ def get_tools(
 ) -> List:
     date_tool = DateTool()
     calculator_tool = CalculatorTool()
+    repl_tool = PythonREPLTool()
+
     company_overview_tool = CompanyOverviewTool()
-    tools = [date_tool, calculator_tool, company_overview_tool]
+    tools = [date_tool, calculator_tool, repl_tool, company_overview_tool]
 
     tavily_api_key = tavily_api_key or TAVILY_API_KEY
     if tavily_api_key:

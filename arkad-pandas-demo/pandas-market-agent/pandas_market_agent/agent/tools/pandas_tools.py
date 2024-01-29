@@ -27,15 +27,15 @@ logging.basicConfig(
 class PandasToolInput(BaseModel):
     query: str = Field(
         description="Query which requires constructing and "
-        "running analytics code over pandas dataframe with historical market data "
-        "for stocks of some sector"
+        "running analytics code over pandas dataframe with historical "
+        "market data to do code calculations or generate chart."
     )
 
 
 class PandasTool(BaseTool):
     name = "PandasTool"
-    description = "Tool to process queries related to market sectors, "
-    "and their stocks - both overall and specific market performance"
+    description = """Tool to do code calculations or generate chart over over pandas dataframe with historical 
+    market data to do code calculations or generate chart."""
     args_schema: Type[BaseModel] = PandasToolInput
 
     llm: BaseLanguageModel = None
@@ -80,10 +80,6 @@ class PandasTool(BaseTool):
     def _run(
         self, query: str, run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str:
-        if run_manager:
-            logging.info(f"Callback Manager of type {type(run_manager)}")
-        else:
-            logging.info("No callback managers mf")
         result = self.db.similarity_search(query=query, k=1)
         sector_index = result[0].metadata["sector_index"]
         sector_df_agent = self.index_to_agent[sector_index]

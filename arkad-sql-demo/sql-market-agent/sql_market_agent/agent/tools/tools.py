@@ -1,4 +1,3 @@
-import os
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain.tools import BaseTool, Tool
 from typing import Type
@@ -6,6 +5,7 @@ from langchain.chains import LLMMathChain
 from langchain_openai.chat_models import ChatOpenAI
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
+from langchain_experimental.utilities import PythonREPL
 from dotenv import load_dotenv
 import logging
 
@@ -35,6 +35,29 @@ class CalculatorTool(BaseTool):
         return llm_math_chain.run(query)
 
 
+# PythonREPL tool. Warning: This executes code locally, which can be unsafe when not sandboxed
+class PythonREPLInput(BaseModel):
+    code: str = Field(
+        description="The python code to execute to do code calculations or generate chart."
+    )
+
+
+class PythonREPLTool(BaseTool):
+    name = "PythonREPLTool"
+    description = """Use this to execute python code. If you want to see the output of a value, 
+    you should print it out with `print(...)`. This is visible to the user."""
+    args_schema: Type[BaseModel] = PythonREPLInput
+    repl = PythonREPL()
+
+    def _run(self, code: str) -> str:
+        try:
+            result = self.repl.run(code)
+        except BaseException as e:
+            return f"Failed to execute. Error: {repr(e)}"
+        return f"Succesfully executed:\n```python\n{code}\n```\nStdout: {result}"
+
+
+# Search tool
 def get_tavily_search_tool(tavily_api_key: str = None) -> Tool:
     description = """A search engine optimized for comprehensive, accurate, \
         and trusted results. Useful for when you need to answer questions \
