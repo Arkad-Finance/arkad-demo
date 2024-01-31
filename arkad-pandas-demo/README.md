@@ -1,9 +1,9 @@
-# ARKAD SQL Demo
+# ARKAD Pandas Demo
 
 ## Introduction
-Welcome to the ARKAD SQL Demo! This project is a demonstration of an AI Assistant designed for Stock Market Investment Research. The assistant is built using Langchain and Streamlit and it can retrieve a wide range of financial data, perform analysis, and execute SQL and Python code for complex calculations.
+Welcome to the ARKAD Pandas Demo! This project is a demonstration of an AI Assistant designed for Stock Market Investment Research. The difference from [Arkad SQL Demo](https://github.com/Arkad-Finance/arkad-demo/tree/main/arkad-sql-demo) is that it uses pandas dataframes and hierarchical indexing over summaries of sectors and their respective stocks + separate Langchain Pandas Agent instead of storing all information about stocks market performance in single SQL database. The assistant is built using Langchain and Streamlit and it can retrieve a wide range of financial data, perform analysis, and execute Python code for complex calculations over pandas DataFrames.
 
-This AI Assistant can provide company profile information, search for recent news and events, and perform analytical operations over stock market performance data stored in an SQL database. It's an invaluable tool for investors, financial analysts, and anyone interested in stock market research.
+This AI Assistant can provide company profile information, search for recent news and events, and perform analytical operations over stock market performance data stored in pandas DataFrames. It's an invaluable tool for investors, financial analysts, and anyone interested in stock market research.
 
 
 ## Note:
@@ -13,14 +13,13 @@ This is the first version of such an agent. Feedback and propositions are highly
 ## Features
 - **Company Profile Retrieval:** Get detailed information like market cap, latest earnings numbers, dividend yield and rate, operating and profit margins, etc.
 - **News and Events Search:** Utilize Tavily Search to find the latest news, events, and M&A deals.
-- **Analytical Operations:** Perform operations on stock market data including candles, volume, and net changes.
-- **Python Code Execution:** For more complex calculations and plotting charts, the agent can write and execute Python code.
+- **Python Code Execution:** Calculations on stock market data including candles, volume, net changes, plotting charts.
 - **Streamlit Integration:** The assistant is accessible through a user-friendly Streamlit application. **Note:** plotting currently is not available when using streamlit for frontend interaction. To observe plotting capabilities, please refer to notebooks section.
+
 
 ## Important information
 - **Data Source**: The agent uses yfinance to download market data. Adhere to Yahoo!'s terms of use regarding data usage.
-- **Database Caution**: Avoid using production databases and databases with sensitive data. Sandbox your environment wherever possible.
-- **Execution Caution**: The agent is capable of executing inserts, updates, deletes, and arbitrary Python code. Use with caution.
+- **Execution Caution**: The agent is capable of executing an arbitrary Python code. Use with caution.
 
 
 ## Prerequisites
@@ -32,11 +31,11 @@ This is the first version of such an agent. Feedback and propositions are highly
 1. Clone the repository:
     ```bash
     git clone https://github.com/Arkad-Finance/arkad-demo.git
-    cd arkad-sql-demo
+    cd arkad-pandas-demo
     ```
 2. Install dependencies using Poetry:
 
-     - For running streamlit_front:
+    - For running streamlit_front:
     ```bash
     cd streamlit_front
     poetry install
