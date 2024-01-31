@@ -2,7 +2,7 @@
 
 # Stop and remove the containers, networks, and volumes
 echo "Stopping the current Docker Compose stack..."
-docker-compose down -v
+docker compose down -v
 
 echo "Stopping postgresql to free port for rerun, need password for that..."
 
@@ -11,8 +11,8 @@ echo "Stopping postgresql to free port for rerun, need password for that..."
 
 # Rebuild the Docker images
 echo "Rebuilding Docker images..."
-docker-compose build
+docker compose build
 
 # Start the Docker Compose stack in detached mode
 echo "Starting the Docker Compose stack..."
-docker-compose up
+docker compose up
