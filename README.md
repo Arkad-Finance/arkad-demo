@@ -13,7 +13,7 @@ The Arkad SQL features an AI Assistant that retrieves financial data and perform
 - **Read More:** [Arkad SQL Demo README](./arkad-sql-demo/README.md)
 
 ### 2. [Arkad Pandas Demo](./arkad-pandas-demo)
-The ARKAD Pandas Demo focuses on using Pandas DataFrames for handling and analyzing financial data.
+The Arkad Pandas Demo focuses on using Pandas DataFrames for handling and analyzing financial data.
 
 - **Repository:** [Arkad Pandas Demo](./arkad-pandas-demo)
 - **Read More:** [Arkad Pandas Demo README](./arkad-pandas-demo/README.md)
