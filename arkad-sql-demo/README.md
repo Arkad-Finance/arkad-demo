@@ -21,8 +21,8 @@ This AI Assistant can provide company profile information, search for recent new
 ## Installation
 - Clone the repository:
     ```bash
-    git clone [your-repository-url]
+    git clone https://github.com/Arkad-Finance/arkad-demo.git
     cd arkad-sql-demo
--Install dependencies using Poetry:
+- Install dependencies using Poetry:
     ```bash
     poetry install
