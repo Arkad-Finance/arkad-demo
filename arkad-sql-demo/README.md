@@ -64,7 +64,7 @@ This AI Assistant can provide company profile information, search for recent new
     poetry install
 
 ## Usage
-### Basic Usage
+- Basic Usage
     ```python
     import openai
     from sql_market_agent.agent.agent import create_sql_market_agent
