@@ -13,7 +13,7 @@ This is the first version of such an agent. Feedback and propositions are highly
 ## Features
 - **Company Profile Retrieval:** Get detailed information like market cap, latest earnings numbers, dividend yield and rate, operating and profit margins, etc.
 - **News and Events Search:** Utilize Tavily Search to find the latest news, events, and M&A deals.
-- **Analytical Operations:** Perform operations on stock market data including candles, volume, and net changes.
+- **Analytical Operations:** Perform SQL RAG on stock market data including candles, volume, and net changes.
 - **Python Code Execution:** For more complex calculations and plotting charts, the agent can write and execute Python code.
 - **Streamlit Integration:** The assistant is accessible through a user-friendly Streamlit application. **Note:** plotting currently is not available when using streamlit for frontend interaction. To observe plotting capabilities, please refer to notebooks section.
 
@@ -66,7 +66,7 @@ This is the first version of such an agent. Feedback and propositions are highly
     )
 
     response = agent_executor(
-        {"input": user_input, "chat_history":[]}
+        {"input": "plot close price for XOM most recent 5 days", "chat_history":[]}
     )
     ```
 

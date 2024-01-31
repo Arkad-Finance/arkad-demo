@@ -1,7 +1,7 @@
 # ARKAD Pandas Demo
 
 ## Introduction
-Welcome to the ARKAD Pandas Demo! This project is a demonstration of an AI Assistant designed for Stock Market Investment Research. The difference from [Arkad SQL Demo](https://github.com/Arkad-Finance/arkad-demo/tree/main/arkad-sql-demo) is that it uses pandas dataframes and hierarchical indexing over summaries of sectors and their respective stocks + separate Langchain Pandas Agent instead of storing all information about stocks market performance in single SQL database. The assistant is built using Langchain and Streamlit and it can retrieve a wide range of financial data, perform analysis, and execute Python code for complex calculations over pandas DataFrames.
+Welcome to the ARKAD Pandas Demo! This project is a demonstration of an AI Assistant designed for Stock Market Investment Research. The only difference from [Arkad SQL Demo](https://github.com/Arkad-Finance/arkad-demo/tree/main/arkad-sql-demo) is that it uses pandas dataframes and hierarchical indexing over summaries of sectors and their respective stocks + separate Langchain Pandas Agent instead of storing all information about stocks market performance in single SQL database. The assistant is built using Langchain and Streamlit and it can retrieve a wide range of financial data, perform analysis, and execute Python code for complex calculations over pandas DataFrames.
 
 This AI Assistant can provide company profile information, search for recent news and events, and perform analytical operations over stock market performance data stored in pandas DataFrames. It's an invaluable tool for investors, financial analysts, and anyone interested in stock market research.
 
@@ -46,101 +46,43 @@ This is the first version of such an agent. Feedback and propositions are highly
     poetry install
     ```
 ## Usage
-- Current version of arkad-sql-demo works with OpenAI models, will add open source models soon.
+- Current version of arkad-pandas-demo works with OpenAI models, will add open source models soon.
 - If you want tavily search to work - create account at [Tavily website](https://tavily.com/) get API_KEY (there is free option) and paste it as tavily_api_key argument when creating agent.
-- Another option is to define all api keys and db connection arguments in .env file, look at .envexample for reference.
+- Another option is to define api keys in .env file, look at .envexample for reference.
 
 ### Basic Usage
-- In this scenario sql_market_agent will create SQLite database on disc and upload data for stocks specified in sql-market-agent/sql_market_agent/agent/tools/storage/stocks.json.
+- In this scenario pandas_market_agent will download data for stocks specified in pandas-market-agent/pandas_market_agent/agent/tools/storage/stocks.json.
     ```python
     import openai
-    from sql_market_agent.agent.agent import create_sql_market_agent
+    from pandas_market_agent.agent.agent import create_pandas_market_agent
 
     openai.api_key = “YOUR_OPENAI_API_KEY”
     llm = ChatOpenAI(temperature=0, model="gpt-4", streaming=True)
 
-    agent_executor = create_sql_market_agent(
+    agent_executor = create_pandas_market_agent(
         llm=llm,
-        preinitialize_database=True,
     )
 
     response = agent_executor(
-        {"input": user_input, "chat_history":[]}
+        {"input": "plot chart of NKE stock close price for last 5 dates you have in df", "chat_history":[]}
     )
     ```
 
 - Also you may pass stocks list like this:
     ```python
-    agent_executor = create_sql_market_agent(
+    agent_executor = create_pandas_market_agent(
         llm=llm,
-        preinitialize_database=True,
         stocks=["XOM", "CAT", "NKE"]
     )   
     ```
 
 - In this case agent will download information for their specific industry from yfinance. You may specify sector manually:
     ```python
-    agent_executor = create_sql_market_agent(
+    agent_executor = create_pandas_market_agent(
         llm=llm,
-        preinitialize_database=True,
         stocks=[{ "ticker": "XOM", "sector": "Oil" },
                 { "ticker": "CAT", "sector": "Heavy Machinery" },
                 { "ticker": "NKE", "sector": "Footwear" },
     )
     ```
 - Stocks argument may be either list of stock tickers or list of dicts like above with keys “ticker” and “sector”. 
-
-### If you want to work with your up and running postgres database
-- In this scenario sql market agent will connect to your database, figure out its schema and will be capable of running sql queries over your data. 
-Note, that we don’t set preinitialize_database to True (which is False by default) because we do not want to drop if exists and create stockdata table in your database. If you want to do that - you may set preinitialize_database to True explicitly. In that scenario you either pass a stocks list for which you want to download data or sql agent will use default stocks from sql-market-agent/sql_market_agent/agent/tools/storage/stocks.json. 
-    ```python
-    from langchain_openai.chat_models import ChatOpenAI
-    from sql_market_agent.agent.agent import create_sql_market_agent
-    from dotenv import load_dotenv
-
-    load_dotenv()
-
-    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-    DB_HOST = os.getenv("POSTGRES_HOST", "localhost")
-    DB_PORT = os.getenv("POSTGRES_PORT", "5432")
-    DB_NAME = os.environ.get("POSTGRES_DB")
-    DB_USER = os.environ.get("POSTGRES_USER")
-    DB_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
-
-    openai.api_key = OPENAI_API_KEY
-
-    llm = ChatOpenAI(temperature=0, model="gpt-4", streaming=True)
-
-    # Create postgres connection string:
-    db_connection_string = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    )
-    agent_executor = create_sql_market_agent(
-        llm=llm,
-        db_connection_string=db_connection_string,
-    )
-    ```
-
-### Run with streamlit:
-- Go to streamlit_front directory and run streamlit app:
-    ```bash 
-    cd streamlit_front
-    streamlit run app.py
-    ```
-
-### Run with docker:
-- Install docker and docker compose.
-- This will:
-1. Spin a local postgres instance
-2. Run job which will fetch data for stocks defined in db/stocks.json
-3. Schedule subsequent fetching, currently for daily OHLCV data
-4. Run streamlit frontend for interaction
-- Please, setup api keys and db connection arguments in .env file, look at .envexample for reference.
-- Run inside arkad-sql-demo directory:
-    ```bash
-    docker compose up
-    ```
-
-- Or you can execute run.sh script. Note, that it will first run docker compose down -v to stop current docker compose stack, use with caution:
-    ```bash
-    source run.sh
-    ```
