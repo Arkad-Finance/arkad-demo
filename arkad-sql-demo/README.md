@@ -66,7 +66,6 @@ This AI Assistant can provide company profile information, search for recent new
 ## Usage
 ### Basic Usage
     ```python
-    # Import the necessary modules and set up the AI model.
     import openai
     from sql_market_agent.agent.agent import create_sql_market_agent
 
@@ -104,6 +103,8 @@ This AI Assistant can provide company profile information, search for recent new
     )
     ```
 - Stocks argument may be either list of stock tickers or list of dicts like above with keys “ticker” and “sector”. 
+
+
 Initialize the agent with or without a database.
 Execute queries using the agent.
 Running with Streamlit
