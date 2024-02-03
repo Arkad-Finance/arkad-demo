@@ -21,7 +21,7 @@ from sql_market_agent.agent.tools.tools import (
     CalculatorTool,
     PythonREPLTool,
 )
-from sql_market_agent.agent.tools.datetime_tools import DateTool
+# from sql_market_agent.agent.tools.datetime_tools import DateTool
 from sql_market_agent.agent.tools.sql_tools import get_sql_database_tool
 from sql_market_agent.agent.tools.company_overview_tools import CompanyOverviewTool
 from dotenv import load_dotenv
@@ -45,12 +45,12 @@ def get_tools(
     stocks: List[Dict[str, str]] = None,
     tavily_api_key: str = None,
 ) -> List:
-    date_tool = DateTool()
+    # date_tool = DateTool()
     calculator_tool = CalculatorTool()
     repl_tool = PythonREPLTool()
 
     company_overview_tool = CompanyOverviewTool()
-    tools = [date_tool, calculator_tool, repl_tool, company_overview_tool]
+    tools = [calculator_tool, repl_tool, company_overview_tool]
 
     tavily_api_key = tavily_api_key or TAVILY_API_KEY
     if tavily_api_key:

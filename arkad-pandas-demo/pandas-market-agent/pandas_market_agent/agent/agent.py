@@ -16,8 +16,8 @@ from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain_core.language_models import BaseLanguageModel
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.tools.render import format_tool_to_openai_function
-from pandas_market_agent.agent.tools.tools import get_tavily_search_tool, CalculatorTool
-from pandas_market_agent.agent.tools.datetime_tools import DateTool
+from pandas_market_agent.agent.tools.tools import get_tavily_search_tool, CalculatorTool, PythonREPLTool
+# from pandas_market_agent.agent.tools.datetime_tools import DateTool
 from pandas_market_agent.agent.tools.pandas_tools import PandasTool
 from pandas_market_agent.agent.tools.company_overview_tools import CompanyOverviewTool
 from dotenv import load_dotenv
@@ -40,10 +40,12 @@ def get_tools(
     stocks: List[Dict[str, str]] = None,
     tavily_api_key: str = None,
 ) -> List:
-    date_tool = DateTool()
+    # date_tool = DateTool()
     calculator_tool = CalculatorTool()
     company_overview_tool = CompanyOverviewTool()
-    tools = [date_tool, calculator_tool, company_overview_tool]
+    repl_tool = PythonREPLTool()
+
+    tools = [calculator_tool, repl_tool, company_overview_tool]
 
     tavily_api_key = tavily_api_key or TAVILY_API_KEY
     if tavily_api_key:
