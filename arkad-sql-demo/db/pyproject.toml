@@ -12,6 +12,7 @@ python-dotenv = "^1.0.0"
 schedule = "^1.2.1"
 pandas = "^2.2.0"
 sqlalchemy = "^2.0.25"
+pandas-datareader = "^0.10.0"
 
 
 [build-system]

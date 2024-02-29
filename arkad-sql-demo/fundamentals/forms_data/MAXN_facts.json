@@ -1,0 +1,223 @@
+{
+    "cik": 1796898,
+    "entityName": "Maxeon Solar Technologies, Ltd.",
+    "facts": {
+        "dei": {
+            "EntityCommonStockSharesOutstanding": {
+                "label": "Entity Common Stock, Shares Outstanding",
+                "description": "Indicate number of shares or other units outstanding of each of registrant's classes of capital or common stock or other ownership interests, if and as stated on cover of related periodic report. Where multiple classes or units exist define each class/interest by adding class of stock items such as Common Class A [Member], Common Class B [Member] or Partnership Interest [Member] onto the Instrument [Domain] of the Entity Listings, Instrument.",
+                "units": {
+                    "shares": [
+                        {
+                            "end": "2021-01-03",
+                            "val": 33995116,
+                            "accn": "0001796898-21-000016",
+                            "fy": 2020,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2021-04-06",
+                            "frame": "CY2020Q4I"
+                        },
+                        {
+                            "end": "2022-01-02",
+                            "val": 44246603,
+                            "accn": "0001796898-22-000020",
+                            "fy": 2021,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2022-03-24",
+                            "frame": "CY2021Q4I"
+                        },
+                        {
+                            "end": "2023-01-01",
+                            "val": 45033027,
+                            "accn": "0001796898-23-000025",
+                            "fy": 2022,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2023-03-07",
+                            "frame": "CY2022Q4I"
+                        }
+                    ]
+                }
+            }
+        },
+        "us-gaap": {
+            "EarningsPerShareBasic": {
+                "label": "Earnings Per Share, Basic",
+                "description": "The amount of net income (loss) for the period per each share of common stock or unit outstanding during the reporting period.",
+                "units": {
+                    "USD/shares": [
+                        {
+                            "start": "2018-12-31",
+                            "end": "2019-12-29",
+                            "val": -8.61,
+                            "accn": "0001796898-22-000020",
+                            "fy": 2021,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2022-03-24",
+                            "frame": "CY2019"
+                        },
+                        {
+                            "start": "2019-12-30",
+                            "end": "2021-01-03",
+                            "val": -5.82,
+                            "accn": "0001796898-22-000020",
+                            "fy": 2021,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2022-03-24"
+                        },
+                        {
+                            "start": "2019-12-30",
+                            "end": "2021-01-03",
+                            "val": -5.82,
+                            "accn": "0001796898-23-000025",
+                            "fy": 2022,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2023-03-07",
+                            "frame": "CY2020"
+                        },
+                        {
+                            "start": "2021-01-04",
+                            "end": "2022-01-02",
+                            "val": -6.79,
+                            "accn": "0001796898-22-000020",
+                            "fy": 2021,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2022-03-24"
+                        },
+                        {
+                            "start": "2021-01-04",
+                            "end": "2022-01-02",
+                            "val": -6.79,
+                            "accn": "0001796898-23-000025",
+                            "fy": 2022,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2023-03-07",
+                            "frame": "CY2021"
+                        },
+                        {
+                            "start": "2022-01-03",
+                            "end": "2023-01-01",
+                            "val": -6.54,
+                            "accn": "0001796898-23-000025",
+                            "fy": 2022,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2023-03-07",
+                            "frame": "CY2022"
+                        }
+                    ]
+                }
+            },
+            "Revenues": {
+                "label": "Revenue from Contract with Customer, Excluding Assessed Tax",
+                "description": "Amount, excluding tax collected from customer, of revenue from satisfaction of performance obligation by transferring promised good or service to customer. Tax collected from customer is tax assessed by governmental authority that is both imposed on and concurrent with specific revenue-producing transaction, including, but not limited to, sales, use, value added and excise.",
+                "units": {
+                    "USD": [
+                        {
+                            "start": "2018-01-01",
+                            "end": "2018-12-30",
+                            "val": 912313000,
+                            "accn": "0001796898-21-000016",
+                            "fy": 2020,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2021-04-06",
+                            "frame": "CY2018"
+                        },
+                        {
+                            "start": "2018-12-31",
+                            "end": "2019-12-29",
+                            "val": 1198301000,
+                            "accn": "0001796898-21-000016",
+                            "fy": 2020,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2021-04-06"
+                        },
+                        {
+                            "start": "2018-12-31",
+                            "end": "2019-12-29",
+                            "val": 1198301000,
+                            "accn": "0001796898-22-000020",
+                            "fy": 2021,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2022-03-24",
+                            "frame": "CY2019"
+                        },
+                        {
+                            "start": "2019-12-30",
+                            "end": "2021-01-03",
+                            "val": 844836000,
+                            "accn": "0001796898-21-000016",
+                            "fy": 2020,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2021-04-06"
+                        },
+                        {
+                            "start": "2019-12-30",
+                            "end": "2021-01-03",
+                            "val": 844836000,
+                            "accn": "0001796898-22-000020",
+                            "fy": 2021,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2022-03-24"
+                        },
+                        {
+                            "start": "2019-12-30",
+                            "end": "2021-01-03",
+                            "val": 844836000,
+                            "accn": "0001796898-23-000025",
+                            "fy": 2022,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2023-03-07",
+                            "frame": "CY2020"
+                        },
+                        {
+                            "start": "2021-01-04",
+                            "end": "2022-01-02",
+                            "val": 783279000,
+                            "accn": "0001796898-22-000020",
+                            "fy": 2021,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2022-03-24"
+                        },
+                        {
+                            "start": "2021-01-04",
+                            "end": "2022-01-02",
+                            "val": 783279000,
+                            "accn": "0001796898-23-000025",
+                            "fy": 2022,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2023-03-07",
+                            "frame": "CY2021"
+                        },
+                        {
+                            "start": "2022-01-03",
+                            "end": "2023-01-01",
+                            "val": 1060113000,
+                            "accn": "0001796898-23-000025",
+                            "fy": 2022,
+                            "fp": "FY",
+                            "form": "20-F",
+                            "filed": "2023-03-07",
+                            "frame": "CY2022"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

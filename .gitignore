@@ -6,6 +6,7 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 .idea/
 *.swp
 
@@ -15,3 +16,7 @@ venv/
 # Other common ignores
 .DS_Store
 Thumbs.db
+
+charts/
+earnings/
+facts/

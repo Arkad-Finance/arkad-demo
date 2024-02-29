@@ -19,6 +19,8 @@ langchain-experimental = "^0.0.49"
 langchain-openai = "^0.0.3"
 pandas = "^2.2.0"
 yfinance = "^0.2.36"
+e2b = "^0.14.2"
+pandas-datareader = "^0.10.0"
 
 [build-system]
 requires = ["poetry-core"]

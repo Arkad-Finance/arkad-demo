@@ -10,6 +10,9 @@ python = "^3.10"
 sql-market-agent = {path = "../sql-market-agent", develop = true}
 streamlit = "^1.29.0"
 numexpr = "^2.8.7"
+matplotlib = "^3.8.2"
+plotly = "^5.18.0"
+pdfkit = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core"]

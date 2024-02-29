@@ -19,6 +19,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_HOST: postgres
+      EMAIL: ${EMAIL}
+      FRED_API_KEY: ${FRED_API_KEY}
     depends_on:
       - postgres
 

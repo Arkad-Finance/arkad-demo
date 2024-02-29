@@ -1,0 +1,20 @@
+[
+    {"symbol": "UNRATE", "description": "Unemployment Rate"},
+    {"symbol": "CPIAUCSL", "description": "Consumer Price Index"},
+    {"symbol": "DFF", "description": "Federal Funds Effective Rate"},
+    {"symbol": "DFEDTARU", "description": "Federal Funds Target Range - Upper Limit"},
+    {"symbol": "DFEDTARL", "description": "Federal Funds Target Range - Lower Limit"},
+    {"symbol": "DJIA", "description": "Dow Jones Industrial Average"},
+    {"symbol": "SP500", "description": "S&P500 Index"},
+    {"symbol": "A191RL1Q225SBEA", "description": "Real Gross Domestic Product"},
+    {"symbol": "T10Y2Y", "description": " 10-Year Treasury Constant Maturity Minus 2-Year Treasury Constant Maturity. Precalculated spread between yields of 10y and 2y treasury bonds"},
+    {"symbol": "T10Y3M", "description": "10-Year Treasury Constant Maturity Minus 3-Month Treasury Constant Maturity. Precalculated spread between yields of 10y and 3m treasury bonds"},
+    {"symbol": "DGS3MO", "description": "Market Yield on U.S. Treasury Securities at 3-Month Constant Maturity, Quoted on an Investment Basis"},
+    {"symbol": "DGS6MO", "description": "Market Yield on U.S. Treasury Securities at 6-Month Constant Maturity, Quoted on an Investment Basis"},
+    {"symbol": "DGS1", "description": "Market Yield on U.S. Treasury Securities at 1-Year Constant Maturity, Quoted on an Investment Basis"},
+    {"symbol": "DGS2", "description": "Market Yield on U.S. Treasury Securities at 2-Year Constant Maturity, Quoted on an Investment Basis"},
+    {"symbol": "DGS5", "description": "Market Yield on U.S. Treasury Securities at 5-Year Constant Maturity, Quoted on an Investment Basis"},
+    {"symbol": "DGS10", "description": "Market Yield on U.S. Treasury Securities at 10-Year Constant Maturity, Quoted on an Investment Basis"},
+    {"symbol": "DGS20", "description": "Market Yield on U.S. Treasury Securities at 20-Year Constant Maturity, Quoted on an Investment Basis"},
+    {"symbol": "DGS30", "description": "Market Yield on U.S. Treasury Securities at 30-Year Constant Maturity, Quoted on an Investment Basis"}
+]

@@ -11,6 +11,7 @@ sql-market-agent = {path = "../sql-market-agent", develop = true}
 numexpr = "^2.8.7"
 ipykernel = "^6.29.0"
 matplotlib = "^3.8.2"
+numpy = "^1.26.4"
 
 [build-system]
 requires = ["poetry-core"]

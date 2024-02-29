@@ -1,7 +1,7 @@
 import schedule
 from pathlib import Path
 import time
-from db_fetcher import run_fetch_job, read_stocks_from_json
+from db_fetcher import run_fetch_job
 import os
 import logging
 
@@ -19,14 +19,12 @@ DB_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
 
 
 def run_scheduled_fetching(db_connection_string: str):
-    stocks_json_path = Path(__file__).parent / "stocks.json"
-    stocks = read_stocks_from_json(stocks_json_path)
-    run_fetch_job(db_connection_string=db_connection_string, stocks=stocks)
+    run_fetch_job(db_connection_string=db_connection_string, preinitialize_database=True)
     logging.info(msg="Finished initial fetch")
 
     # Schedule the job every day at 00:00 AM UTC
     schedule.every().day.at("00:00").do(
-        run_fetch_job, db_connection_string, False, stocks
+        run_fetch_job, db_connection_string, False
     )
     logging.info(msg="Scheduled subsequent")
     while True:

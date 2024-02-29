@@ -1,18 +1,18 @@
-import yfinance as yf
-import pandas as pd
 import sqlalchemy
 import os
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import List, Dict
+from typing import List, Dict, Optional
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-from sqlalchemy import text, insert, select
-from sqlalchemy.dialects.postgresql import insert as insert_postgres
+from sql_market_agent.agent.tools.storage.fred.fred_processor import fetch_and_insert_macro_metrics_data
+from sql_market_agent.agent.tools.storage.stocks.candles.candles_processor import fetch_and_insert_stocks_data
+from sql_market_agent.agent.tools.storage.stocks.sec_forms.xbrl_processor import fetch_and_insert_revenues_data
+
 from pathlib import Path
 import traceback
+from datetime import datetime
 
 # Setup basic logging
 logging.basicConfig(
@@ -43,116 +43,20 @@ def connect_to_database(db_connection_string: str) -> sqlalchemy.engine.Engine:
     return create_engine(db_connection_string)
 
 
-def fetch_stock_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
-    stock = yf.Ticker(symbol)
-    return stock.history(start=start_date, end=end_date)
-
-
-def calculate_daily_change(current_close: float, previous_close: float) -> float:
-    return (
-        (current_close - previous_close) / previous_close * 100
-        if previous_close is not None
-        else None
-    )
-
-
-def get_last_date_for_stock(session: sqlalchemy.orm.Session, symbol: str) -> str:
-    result = session.execute(
-        text("SELECT MAX(Date) FROM StockData WHERE Symbol = :symbol"),
-        {"symbol": symbol},
-    ).fetchone()
-    last_date = None
-    if result:
-        last_date = (
-            datetime.strptime(result[0], "%Y-%m-%d").date()
-            if isinstance(result[0], str)
-            else result[0]
-        )
-
-    return last_date
-
-
-def get_last_close_for_stock(
-    session: sqlalchemy.orm.Session, stock_table: sqlalchemy.Table, symbol: str
-) -> float:
-    last_close_query = (
-        select(stock_table.c.close)
-        .where(stock_table.c.symbol == symbol)
-        .order_by(stock_table.c.date.desc())
-        .limit(1)
-    )
-    result = session.execute(last_close_query).fetchone()
-    return result[0] if result else None
-
-
-def fetch_and_insert_data(
-    session: sqlalchemy.orm.Session, stocks: List[Dict[str, str]]
-):
-    stock_table = sqlalchemy.Table(
-        "stockdata", sqlalchemy.MetaData(), autoload_with=session.bind
-    )
-
-    for stock in stocks:
-        symbol = stock["ticker"]
-        sector = stock["sector"]
-        if not sector:
-            sector = yf.Ticker(symbol).get_info().get("industry", "")
-        last_date = get_last_date_for_stock(session, symbol)
-        start_date = (
-            (last_date + timedelta(days=1))
-            if last_date
-            else (datetime.now() - timedelta(days=30)).date()
-        )
-        end_date = datetime.now().date()
-        if start_date < end_date:
-            stock_data = fetch_stock_data(
-                symbol, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
-            )
-
-            prev_close = get_last_close_for_stock(session, stock_table, symbol)
-            data_to_insert = []
-            for index, row in stock_data.iterrows():
-                daily_change = calculate_daily_change(row["Close"], prev_close)
-                prev_close = row["Close"]
-                if daily_change is not None:
-                    data_to_insert.append(
-                        {
-                            "symbol": symbol,
-                            "sector": sector,
-                            "date": index.strftime("%Y-%m-%d"),
-                            "open": row["Open"],
-                            "high": row["High"],
-                            "low": row["Low"],
-                            "close": row["Close"],
-                            "volume": row["Volume"],
-                            "dailychangepercent": daily_change,
-                        }
-                    )
-
-            if session.bind.dialect.name == "postgresql":
-                statement = (
-                    insert_postgres(stock_table)
-                    .values(data_to_insert)
-                    .on_conflict_do_nothing()
-                )
-            elif session.bind.dialect.name == "sqlite":
-                statement = (
-                    insert(stock_table).values(data_to_insert).prefix_with("OR IGNORE")
-                )
-
-            session.execute(statement)
-            session.commit()
-
-
-def read_stocks_from_json(file_path: str) -> json:
+def read_assets_from_json(file_path: str) -> json:
     with open(file_path, "r") as file:
         return json.load(file)
-
+    
 
 def run_fetch_job(
     db_connection_string: str,
     preinitialize_database: bool = False,
     stocks: List[Dict[str, str]] = None,
+    macro_metrics: List[Dict[str, str]] = None,
+    earnings_data_path: Optional[str] = None,
+    facts_data_path: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
 ):
     session = None
     try:
@@ -168,21 +72,40 @@ def run_fetch_job(
 
         if (
             preinitialize_database and not stocks
-        ):  # If preinitializing database - it must have at least some data.
-            # If no stocks passed - read from json
+        ):
             stocks_json_path = Path(__file__).parent / "stocks.json"
-            stocks = read_stocks_from_json(stocks_json_path)
+            stocks = read_assets_from_json(stocks_json_path)
             logging.info(
                 f"No stocks provided. Will use default stocks from internal stocks.json.: {stocks[0:2]}\n..."
             )
 
-        if stocks:
-            fetch_and_insert_data(session, stocks)
-            logging.info("Data fetched and inserted successfully.")
+        if (
+            preinitialize_database and not macro_metrics
+        ):
+            macro_metrics_json_path = Path(__file__).parent / "macro_metrics.json"
+            macro_metrics = read_assets_from_json(macro_metrics_json_path)
+            logging.info(
+                f"No bonds provided. Will use default bonds from internal bonds.json.: {macro_metrics[0:2]}\n..."
+            )
+
+        if preinitialize_database:
+            fetch_and_insert_stocks_data(session, stocks, start_date, end_date)
+            logging.info("Data for stocks candles fetched and inserted successfully.")
+            fetch_and_insert_revenues_data(session, 
+                                           stocks, 
+                                           earnings_data_path, 
+                                           facts_data_path, 
+                                           start_year=datetime.strptime(start_date, "%Y-%m-%d").date().year,
+                                           end_year=datetime.strptime(end_date, "%Y-%m-%d").date().year)
+            logging.info("Data for stocks revenues fetched and inserted successfully.")
+            fetch_and_insert_macro_metrics_data(session, macro_metrics)
+            logging.info("Data for macro metrics fetched and inserted successfully.")
         else:
             logging.info(
-                "Preinitialize set to False and no stocks provided, using database as is"
+                "Preinitialize set to False using database as is"
             )
+        
+        logging.info("Data fetched and inserted successfully.")
     except (Exception, OperationalError) as error:
         logging.error(f"Database error: {error}")
         traceback.print_exc()
