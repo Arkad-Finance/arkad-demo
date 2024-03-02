@@ -42,8 +42,8 @@ DB_NAME = os.environ.get("POSTGRES_DB")
 DB_USER = os.environ.get("POSTGRES_USER")
 DB_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
 unique_id = uuid4().hex[0:8]
-LANGCHAIN_ENDPOINT = os.environ.get("LANGCHAIN_ENDPOINT", "")
-if LANGCHAIN_ENDPOINT:
+LANGCHAIN_API_KEY = os.environ.get("LANGCHAIN_API_KEY", "")
+if LANGCHAIN_API_KEY:
     os.environ["LANGCHAIN_TRACING_V2"] = "true"
     os.environ["LANGCHAIN_PROJECT"] = f"Tracing Walkthrough - {unique_id}"
     os.environ["LANGCHAIN_ENDPOINT"] = os.environ.get("LANGCHAIN_ENDPOINT")

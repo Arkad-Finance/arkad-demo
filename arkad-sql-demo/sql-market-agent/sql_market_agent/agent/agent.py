@@ -98,8 +98,8 @@ def get_tools(
     python_code_checker_tool = PythonProgrammerTool(llm=code_llm)
     tools.append(python_code_checker_tool)
 
-    # repl_tool = SandboxTool()
-    repl_tool = PythonREPLTool()
+    repl_tool = SandboxTool()
+    # repl_tool = PythonREPLTool()
     tools.append(repl_tool)
 
     return tools
