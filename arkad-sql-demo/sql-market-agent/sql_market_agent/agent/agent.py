@@ -32,7 +32,7 @@ from sql_market_agent.agent.tools.tools import (
     get_tavily_search_tool,
     PythonREPLTool,
     SandboxTool,
-    PythonCodeCheckerTool,
+    PythonProgrammerTool,
 )
 from sql_market_agent.agent.tools.prompts.prompts import (
     PREFIX,
@@ -57,7 +57,6 @@ TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
 
 
 def get_tools(
-    llm: BaseLanguageModel,
     sql_llm: BaseLanguageModel,
     code_llm: BaseLanguageModel,
     db_connection_string: str = None,
@@ -96,7 +95,7 @@ def get_tools(
     )
     tools.append(sql_database_tool)
 
-    python_code_checker_tool = PythonCodeCheckerTool(llm=code_llm)
+    python_code_checker_tool = PythonProgrammerTool(llm=code_llm)
     tools.append(python_code_checker_tool)
 
     # repl_tool = SandboxTool()
@@ -165,7 +164,6 @@ def create_sql_market_agent(
     agent_type = agent_type or AgentType.ZERO_SHOT_REACT_DESCRIPTION
 
     tools = get_tools(
-        llm=llm,
         sql_llm=sql_llm,
         code_llm=code_llm,
         db_connection_string=db_connection_string,

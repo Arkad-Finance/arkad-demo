@@ -11,9 +11,26 @@ from langchain_community.callbacks import StreamlitCallbackHandler
 from langchain.agents import AgentType
 from dotenv import load_dotenv
 import json
-import logging
 import traceback
 from uuid import uuid4
+import logging
+from logging.handlers import RotatingFileHandler
+
+# Setup logging to file
+log_file = 'streamlit_app.log'
+
+logger = logging.getLogger('streamlit_logger')
+logger.setLevel(logging.INFO)
+
+file_handler = logging.FileHandler(log_file)
+stream_handler = logging.StreamHandler()
+
+log_format = "%(asctime)s - %(levelname)s - %(message)s"
+file_handler.setFormatter(logging.Formatter(log_format))
+stream_handler.setFormatter(logging.Formatter(log_format))
+
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
 
 
 load_dotenv()
@@ -32,14 +49,6 @@ if LANGCHAIN_ENDPOINT:
     os.environ["LANGCHAIN_ENDPOINT"] = os.environ.get("LANGCHAIN_ENDPOINT")
     os.environ["LANGCHAIN_API_KEY"] = os.environ.get("LANGSMITH_API_KEY")
 
-# Setup basic logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
-
-# Test log message
-logging.info("Started streamlit server...")
 
 load_dotenv()
 
@@ -70,7 +79,7 @@ if 'agent_executor' not in st.session_state:
         sql_llm=st.session_state["sql_llm"],
         code_llm=st.session_state["code_llm"],
         agent_type=AgentType.OPENAI_FUNCTIONS,
-        preinitialize_database=False,
+        # preinitialize_database=True,
         db_connection_string=db_connection_string,
         earnings_data_path="./earnings",
         facts_data_path="./facts",
@@ -114,7 +123,7 @@ def handle_response(user_input: str):
             callbacks=[st_callback],
         )
     except Exception as e:
-        logging.error(f"Exception occurred when processing users input: {e}")
+        logger.error(f"Exception occurred when processing users input: {e}")
         traceback.print_exc()
         response = {"output": "There was an error while processing your request :( Please, try with new one."}
     additional_kwargs = {}
@@ -129,18 +138,18 @@ def handle_response(user_input: str):
             plot_urls = []
             for artifact_path in artifacts_paths:
                 artifact = artifact_path.split("/")[-1]
-                logging.info(f"Plot path: {artifact}")
                 plot_url = f"http://localhost:8000/{artifact}"
+                logger.info(f"Attempting to display HTML file: {artifact} at URL: {plot_url}")
                 plot_urls.append(plot_url)
                 st.components.v1.iframe(plot_url, width=1500, height=600, scrolling=True)
             additional_kwargs["plot_urls"] = plot_urls
         else:
-            logging.info("Artifacts paths not found")
+            logger.info("Artifacts paths not found")
                     
     except IndexError:
         pass
     except Exception as e:
-        logging.error("An error occurred: {}".format(e))
+        logger.error("An error occurred: {}".format(e))
         traceback.print_exc()
 
     response_output = str(response["output"]).replace("$", "\$")

@@ -1,6 +1,4 @@
 # flake8: noqa
-# Insert between 6 and 7
-# Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
 
 SQL_PREFIX = """You are an agent designed to interact with a SQL database.
 Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
@@ -41,3 +39,27 @@ I already know tables I am working with, I already know their schemas, so I do n
 SQL_FUNCTIONS_SUFFIX = """I am working with database, where there is information about about US stocks, bonds and macro metrics data. 
 I already know tables I am working with, I already know their schemas, so I do not need to use sql_db_list_tables and sql_db_schema tools!
 """
+
+QUERY_CHECKER = """
+{query}
+Double check the {dialect} query above for common mistakes, including:
+- Using NOT IN with NULL values
+- Using UNION when UNION ALL should have been used
+- Using BETWEEN for exclusive ranges
+- Data type mismatch in predicates
+- Properly quoting identifiers
+- Using the correct number of arguments for functions
+- Casting to the correct data type
+- Using the proper columns for joins
+- Current date is {current_date}. You know current date. Mandatory rule of thumb is - query MUST work with latest available data unless explicitly asked otherwise. 
+Database from where data is taken, contains most recent data but it may not exactly be until todays date. 
+If some data is inserted on monthly or quarterly basis (like monthly macroeconomic indicators or quarterly or yearly reports) - lagging for some amount of time 
+is allowed. Rule of thumb, unless user explicitly asks for some upper bound for date:
+- For reports: for quarterly reports lag can be no more than two quarters, for yearly reports - no more than one year, for macro metrics - no more than one month, 
+for stocks candles OHLC data - no more than one month.
+
+If there are any of the above mistakes, rewrite the query. If there are no mistakes, just reproduce the original query.
+
+Output the final SQL query only.
+
+SQL Query: """

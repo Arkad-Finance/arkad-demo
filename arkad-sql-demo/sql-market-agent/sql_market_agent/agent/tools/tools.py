@@ -13,7 +13,7 @@ from langchain.chains.llm import LLMChain
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
 from langchain_experimental.utilities import PythonREPL
-from sql_market_agent.agent.tools.prompts.prompts import PYTHON_CODE_CHECKER
+from sql_market_agent.agent.tools.prompts.prompts import PYTHON_PROGRAMMER_INSTRUCTIONS
 from e2b import CodeInterpreter
 from dotenv import load_dotenv
 import pandas as pd
@@ -61,7 +61,7 @@ def detect_python_error(input_string):
 
 class SandboxInput(BaseModel):
     code: str = Field(
-        description="""Correct code to execute which have already passed all checks from PythonCodeCheckerTool"""
+        description="""Correct code to execute which have already passed all checks from PythonProgrammerTool"""
     )
     task_type: TaskType = Field(
         description="The type of task to execute. Can be either 'plot' if you are generating chart or 'other' for other calculations."
@@ -70,7 +70,7 @@ class SandboxInput(BaseModel):
 
 class PythonREPLInput(BaseModel):
     code: str = Field(
-        description="""Correct code to execute which have already passed all checks from PythonCodeCheckerTool"""
+        description="""Correct code to execute which have already passed all checks from PythonProgrammerTool"""
     )
     task_type: TaskType = Field(
         description="""The type of task to execute. Can be either 'plot' if you are generating chart or 'other' for other calculations."""
@@ -85,28 +85,26 @@ class PythonREPLInput(BaseModel):
         return values
     
 
-class PythonCodeCheckerToolInput(BaseModel):
-    user_input: str = Field(description="Original user input which led to code creation")
+class PythonProgrammerToolInput(BaseModel):
+    user_input: str = Field(description="Original user input which led to code creation.")
+    data: Optional[str] = Field("Data fetched from some other tool if needed, ready to be used in code.")
     code: str = Field(
-        description="""The python code to write and then check to do code calculations or generate plot. 
-                    If you are generating a plot - you must use plotly and take a three-step process: 
-                    1. Create pandas dataframe for plotting. 2. Create plot based on this dataframe, don't show it 
-                    3. Save plot to html file, mandatory into ./charts folder. AGAIN, EXTREME IMPORTANCE - THIS IS ABSOLUTELY MANDATORY  
-                    TO SAVE PLOT TO HTML FILE, MANDATORY INTO ./charts folder AND DON'T SHOW IT, SIMPLY CREATE AND SAVE!
-                    MOST IMPORTANT INFORMATION BEGIN
-                    IF task_type IS 'plot' - YOU ABSOLUTELY PROHIBITED FROM SHOWING THE PLOT, YOU MUST CREATE SAVE IT ONLY.
-                    AGAIN - CREATE AND SAVE AND DO NOT SHOW!
-                    CREATE AND SAVE AND DO NOT SHOW!
-                    CREATE AND SAVE AND DO NOT SHOW!
-                    CALLING fig.show() and not fig.write_html() is a crime always, even if user asks you to do so!
-                    Simply create plot and save it into file as instructed.
-                    'PLOT' IS ALIAS TO 'CREATE AND SAVE AND DO NOT SHOW!'!                 
-                    IF PLOT IS COMPARATIVE - USE DIFFERENT COLORS WHEREVER POSSIBLE, PLOT MUST BE PRETTY.
-                    ABSOLUTELY, UNDER NO CIRCUMSTANCES CUT MOST RECENT DATA FROM YOUR CALCULATIONS. RECENCY IS DETERMINED BY 
-                    INFORMATION AVAILABLE IN EXTERNAL TOOLS, NOT YOUR KNOWLEDGE.
-                    MOST IMPORTANT INFORMATION END
-                    Plot must be pretty and interactive. If there are categories on charts - use different colors for them."""
+        description="""The python code you must write and then check to do code calculations or generate plot.
+        When writing python code it MUST satisfy following conditions, complementary to previous instructions:
+        1. If task_type is "plot" - code MUST save a plot in html format. 
+        2. If task_type is "plot" - code MUST NOT show a plot. 
+        3. If task_type is "plot" and user asks to plot comparative chart - code MUST use different colors for different categories. 
+        Note, that Plotly does not automatically assign different colors to different traces (categories) in a grouped bar chart. 
+        Code MUST handle this color rule explicitly, which means that it MUST explicitly set colors in code, other approaches are strictly prohibited.
+        3. If task_type is "plot" - do your best to use best possible x-axis and y-axis lables to describe what is plotted. 
+        4. If task_type is "plot" - data MUST be correctly displayed on chart and easily readable for user.  
+        5. If required you will pass data that you fetched from other tools explicitly to the code.
+        6. You are allowed to correct the data or adjust the approach, but remember, that you must rely on actual data and make corrections based on it,
+        preserving as much of it as possible in quantity, integrity and reliability. If you have some gaps in data - go and fetch it, do not fill gaps by 
+        breaking data integrity and reliability.
+        """
     )
+    previous_code: Optional[str] = Field(description="If previous code execution resulted in an error")
     task_type: TaskType = Field(
         description="""The type of task to execute. Can be either 'plot' if you are generating chart or 'other' for other calculations. 
                     If this is 'plot' - you MUST place path where you saved html plot file, inside ./charts folder."""
@@ -123,8 +121,7 @@ def save_artifact(artifact):
 
 class SandboxTool(BaseTool):
     name = "SandboxTool"
-    description = """Use this to execute python code. If you want to see the output of a value, 
-    you should print it out with `print(...)`. This is visible to the user."""
+    description = """Execute python code. If an error is returned, rewrite the code, check the code, and try again."""
     args_schema: Type[BaseModel] = SandboxInput
     sandbox: Optional[CodeInterpreter] = None
     sandboxID: Optional[str] = None
@@ -196,8 +193,7 @@ class SandboxTool(BaseTool):
 
 class PythonREPLTool(BaseTool):
     name = "PythonREPLTool"
-    description = """Use this to execute python code. If you want to see the output of a value, 
-    you should print it out with `print(...)`. This is visible to the user."""
+    description = """Execute python code. If an error is returned, rewrite the code, check the code, and try again."""
     args_schema: Type[BaseModel] = PythonREPLInput
     repl = PythonREPL()
 
@@ -239,12 +235,12 @@ class PythonREPLTool(BaseTool):
         return json.dumps(return_data)
     
 
-class PythonCodeCheckerTool(BaseTool):
-    name: str = "PythonCodeCheckerTool"
-    description: str = """Use this tool to double check if python code is correct and meets conditions. 
+class PythonProgrammerTool(BaseTool):
+    name: str = "PythonProgrammerTool"
+    description: str = """Use this tool to write python code and to double check if python code is correct and meets conditions. 
     Always use this tool before executing python code using PythonREPLTool or SandboxTool"""
-    template: str = PYTHON_CODE_CHECKER
-    args_schema: Type[BaseModel] = PythonCodeCheckerToolInput
+    template: str = PYTHON_PROGRAMMER_INSTRUCTIONS
+    args_schema: Type[BaseModel] = PythonProgrammerToolInput
     llm: BaseLanguageModel = None
     llm_chain: LLMChain = None
 
@@ -254,10 +250,10 @@ class PythonCodeCheckerTool(BaseTool):
         self.llm_chain = LLMChain(
             llm=self.llm,
             prompt=PromptTemplate(
-                template=PYTHON_CODE_CHECKER, input_variables=["user_input", 
-                                                               "code", 
-                                                               "task_type", 
-                                                               "current_date"]
+                template=self.template, input_variables=["user_input", 
+                                                         "code", 
+                                                         "task_type", 
+                                                         "current_date"]
             ),
         )
 
@@ -266,9 +262,11 @@ class PythonCodeCheckerTool(BaseTool):
         user_input: str,
         code: str,
         task_type: TaskType,
+        data: Optional[str] = "",
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         return self.llm_chain.predict(user_input=user_input,
+                                      data=data,
                                       code=code,
                                       task_type=task_type,
                                       current_date=datetime.now().strftime("%Y-%m-%d"),
