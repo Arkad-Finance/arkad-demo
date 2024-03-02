@@ -12,6 +12,8 @@ numexpr = "^2.8.7"
 ipykernel = "^6.29.0"
 matplotlib = "^3.8.2"
 numpy = "^1.26.4"
+plotly = "^5.18.0"
+pdfkit = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core"]
