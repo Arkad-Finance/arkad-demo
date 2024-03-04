@@ -91,7 +91,7 @@ class PythonProgrammerToolInput(BaseModel):
     code: str = Field(
         description="""The python code you must write and then check to do code calculations or generate plot.
         When writing python code it MUST satisfy following conditions, complementary to previous instructions:
-        1. If task_type is "plot" - code MUST save a plot in html format. 
+        1. If task_type is "plot" - code MUST save a plot in html format, mandatory into {artifacts_directory}
         2. If task_type is "plot" - code MUST NOT show a plot. 
         3. If task_type is "plot" and user asks to plot comparative chart - code MUST use different colors for different categories. 
         Note, that Plotly does not automatically assign different colors to different traces (categories) in a grouped bar chart. 
@@ -243,9 +243,13 @@ class PythonProgrammerTool(BaseTool):
     args_schema: Type[BaseModel] = PythonProgrammerToolInput
     llm: BaseLanguageModel = None
     llm_chain: LLMChain = None
+    artifacts_directory: str = None
 
-    def __init__(self, llm: BaseLanguageModel):
+    def __init__(self, llm: BaseLanguageModel, artifacts_directory: str):
         super().__init__()
+        code_description = self.args_schema.__fields__['code'].field_info.description
+        updated_description = code_description.format(artifacts_directory=artifacts_directory)
+        self.args_schema.__fields__['code'].field_info.description = updated_description
         self.llm = llm
         self.llm_chain = LLMChain(
             llm=self.llm,
@@ -254,7 +258,7 @@ class PythonProgrammerTool(BaseTool):
                                                          "code", 
                                                          "task_type", 
                                                          "current_date"]
-            ),
+            ).partial(artifacts_directory=artifacts_directory),
         )
 
     def _run(

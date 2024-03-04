@@ -95,11 +95,13 @@ def get_tools(
     )
     tools.append(sql_database_tool)
 
-    python_code_checker_tool = PythonProgrammerTool(llm=code_llm)
-    tools.append(python_code_checker_tool)
-
     repl_tool = SandboxTool()
+    python_code_checker_tool = PythonProgrammerTool(llm=code_llm, 
+                                                    artifacts_directory="/home/user/artifacts")
     # repl_tool = PythonREPLTool()
+    # python_code_checker_tool = PythonProgrammerTool(llm=code_llm, 
+    #                                                 artifacts_directory="./charts")
+    tools.append(python_code_checker_tool)
     tools.append(repl_tool)
 
     return tools

@@ -9,6 +9,7 @@ venv/
 .venv/
 .idea/
 *.swp
+*.log
 
 # Environment variables
 .env
