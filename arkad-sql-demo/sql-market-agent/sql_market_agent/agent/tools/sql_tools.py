@@ -1,4 +1,5 @@
 from pathlib import Path
+import pandas as pd
 from langchain_core.pydantic_v1 import Field, BaseModel, root_validator
 from langchain_core.prompts import PromptTemplate
 from langchain.sql_database import SQLDatabase
@@ -16,7 +17,7 @@ from langchain_core.callbacks import (
 from sql_market_agent.agent.tools.prompts.sql_prompts import (
     SQL_PREFIX,
     SQL_SUFFIX,
-    QUERY_CHECKER
+    QUERY_CHECKER,
 )
 from sql_market_agent.agent.tools.storage.db_fetcher import run_fetch_job
 from typing import List, Dict, Optional, Any, Type
@@ -35,20 +36,40 @@ def read_assets_from_json(file_path: str) -> json:
         return json.load(file)
 
 
-MACRO_METRICS_DESCRIPTION = read_assets_from_json(file_path=Path(__file__).parent / "storage/macro_metrics.json")
+MACRO_METRICS_DESCRIPTION = read_assets_from_json(
+    file_path=Path(__file__).parent / "storage/macro_metrics.json"
+)
 DB_TABLES_DESCRIPTION = {
-    "stockdata": {"description": "sector, date, open, high, low, close, volume, dailychangepercent data about stocks"},
-    "stockfinancialdata": {"description": "fundamental data about both quarterly and yearly earnings per year ('FY') "
-                           "and per each quarter ('Q1', 'Q2', 'Q3', 'Q4') in each year.",
-                           "data_categories_description": "available columns: symbol; sector; year; "
-                           "reporttype - currently only 'Revenue'; period - one of 'Q1', 'Q2', 'Q3', 'Q4', 'FY'; "
-                           "amount in USD, qoq - percent change relative to previous quarter for quarterly reports; "
-                           "yoy - percent change relative to same quarter of previous year for quarterly reports and "
-                           "percent change relative to previous year for full year reports."},
-    "macrometricdata": {"description": "macrometric, description, date, macrometricvalue, periodicchangepercent data about macrometrics including "
-                        "data about treasury bonds yield.",
-                        "data_categories_description": MACRO_METRICS_DESCRIPTION},
+    "stockdata": {
+        "description": "sector, date, open, high, low, close, volume, dailychangepercent data about stocks"
+    },
+    "stockfinancialdata": {
+        "description": "fundamental data about both quarterly and yearly earnings per year ('FY') "
+        "and per each quarter ('Q1', 'Q2', 'Q3', 'Q4') in each year.",
+        "data_categories_description": "available columns: symbol; sector; year; "
+        "reporttype - currently only 'Revenue'; period - one of 'Q1', 'Q2', 'Q3', 'Q4', 'FY'; "
+        "amount in USD, qoq - percent change relative to previous quarter for quarterly reports; "
+        "yoy - percent change relative to same quarter of previous year for quarterly reports and "
+        "percent change relative to previous year for full year reports.",
+    },
+    "macrometricdata": {
+        "description": "macrometric, description, date, macrometricvalue, periodicchangepercent data about macrometrics including "
+        "data about treasury bonds yield.",
+        "data_categories_description": MACRO_METRICS_DESCRIPTION,
+    },
 }
+
+TEMP_CSV_PATH = "./artifacts/temp.csv"
+
+
+def dump_string_to_dataframe(data_string):
+    data_string = data_string.replace("'", '"')
+    data_list = json.loads(data_string)
+    df = pd.DataFrame(data_list)
+    logging.info(f"Saving intermediate data fetching result to {TEMP_CSV_PATH}...")
+    df.to_csv(TEMP_CSV_PATH)
+    logging.info(f"Saved to {TEMP_CSV_PATH}...")
+    return df.head()
 
 
 class BaseSQLDatabaseTool(BaseModel):
@@ -65,11 +86,12 @@ class _QuerySQLDataBaseToolInput(BaseModel):
 
 
 class QuerySQLDataBaseTool(BaseSQLDatabaseTool, BaseTool):
-    """Tool for querying a SQL database."""
+    """Tool for querying a SQL database"""
 
     name: str = "sql_db_query"
     description: str = """
-    Execute a SQL query against the database and get back the result..
+    Execute a SQL query against the database and get back the result, save it to .csv file and return 
+    path to that file with df.head(). 
     If the query is not correct, an error message will be returned.
     If an error is returned, rewrite the query, check the query, and try again.
     """
@@ -80,7 +102,15 @@ class QuerySQLDataBaseTool(BaseSQLDatabaseTool, BaseTool):
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         """Execute the query, return the results or an error message."""
-        return self.db.run_no_throw(query)
+        query_result = self.db.run_no_throw(query, include_columns=True)
+        if "Error" in query_result:
+            return query_result
+        if not query_result or "[]" in query_result:
+            return {
+                "error": "empty result, please double check database schema if you are doing things correctly"
+            }
+        data_head = dump_string_to_dataframe(query_result)
+        return {"data_path": TEMP_CSV_PATH, "data_head": data_head}
 
 
 class _InfoSQLDatabaseToolInput(BaseModel):
@@ -115,7 +145,9 @@ class ListSQLDatabaseTool(BaseSQLDatabaseTool, BaseTool):
     """Tool for getting tables names."""
 
     name: str = "sql_db_list_tables"
-    description: str = "Input is an empty string, output is a comma separated list of tables in the database."
+    description: str = (
+        "Input is an empty string, output is a comma separated list of tables in the database."
+    )
 
     def _run(
         self,
@@ -137,19 +169,18 @@ class QuerySQLCheckerTool(BaseTool):
     name: str = "sql_db_query_checker"
     description: str = """
     Use this tool to double check if your query is correct before executing it.
-    Always use this tool before executing a query with sql_db_query!
+    Always use this tool before executing a query with sql_db_query or sql_intermediate_db_query!
     """
 
     def __init__(self, db_dialect: SQLDatabase, llm: BaseLanguageModel):
         super().__init__()
-        self.db_dialect=db_dialect
+        self.db_dialect = db_dialect
         self.llm = llm
         self.llm_chain = LLMChain(
             llm=self.llm,
             prompt=PromptTemplate(
-                template=self.template, input_variables=["dialect", 
-                                                         "query", 
-                                                         "current_date"]
+                template=self.template,
+                input_variables=["dialect", "query", "current_date"],
             ),
         )
 
@@ -210,7 +241,8 @@ class SQLDatabaseToolkit(BaseToolkit):
         )
         query_sql_database_tool_description = (
             "Input to this tool is a detailed and correct SQL query, output is a "
-            "result from the database. If the query is not correct, an error message "
+            "path to .csv file on disc where result is saved along with df.head() "
+            "If the query is not correct, an error message "
             "will be returned. If an error is returned, rewrite the query, check the "
             "query, and try again. If you encounter an issue with Unknown column "
             f"'xxxx' in 'field list', use {info_sql_database_tool.name} "
@@ -219,7 +251,9 @@ class SQLDatabaseToolkit(BaseToolkit):
         query_sql_database_tool = QuerySQLDataBaseTool(
             db=self.db, description=query_sql_database_tool_description
         )
-        query_sql_checker_tool = QuerySQLCheckerTool(db_dialect=self.db.dialect, llm=self.llm)
+        query_sql_checker_tool = QuerySQLCheckerTool(
+            db_dialect=self.db.dialect, llm=self.llm
+        )
         return [
             query_sql_database_tool,
             info_sql_database_tool,
@@ -256,7 +290,7 @@ def get_database(
         earnings_data_path=earnings_data_path,
         facts_data_path=facts_data_path,
         start_date=start_date,
-        end_date=end_date
+        end_date=end_date,
     )
 
     logging.info(f"Connecting to db for sql agent...")
@@ -284,12 +318,13 @@ def get_sql_database_tool(
         earnings_data_path=earnings_data_path,
         facts_data_path=facts_data_path,
         start_date=start_date,
-        end_date=end_date
+        end_date=end_date,
     )
     schema_to_insert = db.get_table_info()
-    sql_prefix = SQL_PREFIX.replace("{schema}", schema_to_insert) \
-        .replace("{additional_description}", json.dumps(DB_TABLES_DESCRIPTION)
-                 .replace("{", "{{").replace("}", "}}"))
+    sql_prefix = SQL_PREFIX.replace("{schema}", schema_to_insert).replace(
+        "{additional_description}",
+        json.dumps(DB_TABLES_DESCRIPTION).replace("{", "{{").replace("}", "}}"),
+    )
     toolkit = SQLDatabaseToolkit(db=db, llm=llm)
     db_agent = create_sql_agent(
         llm=llm,

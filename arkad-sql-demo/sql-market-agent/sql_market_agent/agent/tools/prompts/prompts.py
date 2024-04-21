@@ -13,9 +13,17 @@ Rule of thumb is - do your best to work with latest data unless explicitly asked
 You must adhere to this rule - when using both sql tools and writing python code for calculations which require programming.
 If PythonProgramerTool says that it misses something for code implementation - 
 provide that input to it if you can, otherwise, say that you do not have access to such kind of data. 
-If PythonProgramerTool says that it can perform neccessary calculation due to some reason - do your best to provide PythonProgrammerTool 
+If PythonProgramerTool says that it can perform neccessary calculation due to some reason - do your best to provide ProgrammerTool 
 with what is needed for it before giving up on the task. If there is need to fetch data - go and do this, even if you have done this before.
 If there is an error in code execution - rewrite code and fix error. 
+!!!EXTREMELY IMPORTANT INFORMATION BEGIN!!!
+IF ProgrammerTool CHECKED THE CODE AND IT ADHERES TO ALL RULES - YOU ABSOLUTELY MUST 
+EXECUTE IT USING PythonREPLTool or SandboxTool IMMEDIATELLY AFTER CHECK COMPLETION. 
+EXECUTE CODE WHICH IS EXACTLY SAME AS OUTPUT FROM ProgrammerTool. 
+A MAR ratio is a measurement of returns adjusted for risk that can be used to compare the performance of commodity trading advisors, hedge funds, and trading strategies. 
+The MAR ratio is calculated by dividing the compound growth rate of a fund or strategy since its inception by its most significant drawdown. 
+The higher the ratio, the better the risk-adjusted returns. 
+!!!EXTREMELY IMPORTANT INFORMATION END!!!
 """
 
 PYTHON_PROGRAMMER_INSTRUCTIONS = """
@@ -23,11 +31,20 @@ You are given original user input, python code, task_type and current_date.
 user_input:
 {user_input}
 
-data:
-{data}
+data_path:
+{data_path}
+
+data_head:
+{data_head}
 
 code:
 {code}
+
+previous_code:
+{previous_code}
+
+error:
+{error}
 
 task_type:
 {task_type}
@@ -46,20 +63,21 @@ Code MUST handle this color rule explicitly, which means that it MUST explicitly
 5. If task_type is "plot" - data MUST be correctly displayed on chart and easily readable for user.  
 
 Data rules:
-1. Code that you receive is written by another neural network like you. When using data from some external source - 
-this data is hardcoded in that code. Since you cannot verify if this data is actual or random or sample - you MUST guess if this data is actual, 
-given "data" you are provided with if so. If "data" is missing - guess without it. Data in code MUST be actual.
-2. You know current date. Rule of thumb is - code MUST work with latest available data unless explicitly asked otherwise. 
-Database from where data was taken, contains most recent data but it may not exactly be until todays date. 
-If some data is inserted on monthly or quarterly basis (like monthly macroeconomic indicators or quarterly or yearly reports) - lagging for some amount of time 
-is allowed. Rule of thumb, unless user explicitly asks for some upper bound for date:
-- For reports: for quarterly reports lag can be no more than two quarters, for yearly reports - no more than one year, for macro metrics - no more than one month, 
-for stocks candles OHLC data - no more than one month.
-3. Also, code must not truncate data it works with - use 'data' provided for your for reference.
+1. Code that you receive is written by another neural network like you. When 'data_path' is given - you MUST import .csv file as a pandas DataFrame 
+and use that data for further calculations. 'data_path' and 'data_head' fields are mandatory if you used sql_query_tool to fetch data. 
+2. If 'data_path' field is provided - you ABSOLUTELY MUST import data from that .csv file into pandas DataFrame without exceptions and work on that data. 
+'data_head' is given for you to know schema of DataFrame, but this data is incomplete. You MUST use data imported from 'data_path' for your calculations, this is absolutely mandatory. 
+3. You are ABSOLUTELY PROHIBITED from any form of hardcoding data unless explicitly asked otherwise in user_input. 
+4. If 'data_path' is provided - go and do your job, import that data, it is there, nothing limits you from doing that. If you receive 'data_path' and do not execute 
+code - you will go to prison for 15 years. 
+Answers like "I am not sure or I have limitations" are strictly prohibited.
+
+Logic rules:
+1. Do your best to perform user required calculation, if you need some additional input - engage with user, ask questions, but 
+it is your legal obligation to do the job. 
 
 If one or more rules are violated - rewrite the code, if you are missing some data for it - tell what you are missing in detail. 
-If all rules are satisfied, just reproduce the original code.
-If you need data for doing necessary calculations or plotting - output the final Python code only if you have available data for it. 
-If not - tell, what you are missing in detail, given users input and data you have.
+If all rules are satisfied, just reproduce the original code ONLY. 
+If you receive previous_code and error - that means that there was some error in executing your previous version. Fix that and adhere to rules. 
 
-Code from PythonCodeCheckerTool: """
+Working, most up to date and robust code: \n"""

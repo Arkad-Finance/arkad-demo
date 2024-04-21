@@ -95,16 +95,19 @@ def get_tools(
     )
     tools.append(sql_database_tool)
 
-    repl_tool = SandboxTool()
-    python_code_checker_tool = PythonProgrammerTool(llm=code_llm, 
-                                                    artifacts_directory="/home/user/artifacts")
-    # repl_tool = PythonREPLTool()
-    # python_code_checker_tool = PythonProgrammerTool(llm=code_llm, 
-    #                                                 artifacts_directory="./charts")
+    # repl_tool = SandboxTool()
+    # python_code_checker_tool = PythonProgrammerTool(
+    #     llm=code_llm, artifacts_directory="/home/user/artifacts"
+    # )
+    repl_tool = PythonREPLTool()
+    python_code_checker_tool = PythonProgrammerTool(
+        llm=code_llm, artifacts_directory="./artifacts"
+    )
     tools.append(python_code_checker_tool)
     tools.append(repl_tool)
 
     return tools
+
 
 def create_dir(dir_path: str):
     if not os.path.exists(dir_path):
@@ -130,7 +133,7 @@ def create_sql_market_agent(
     earnings_data_path: Optional[str] = None,
     facts_data_path: Optional[str] = None,
     start_date: Optional[str] = "2020-01-01",
-    end_date: Optional[str] = datetime.now().strftime('%Y-%m-%d'),
+    end_date: Optional[str] = datetime.now().strftime("%Y-%m-%d"),
     tavily_api_key: str = None,
 ) -> AgentExecutor:
     # Not proceeding if db_connection_string is None and preinitialize_database is False
@@ -158,7 +161,7 @@ def create_sql_market_agent(
         )
 
     # Create directories for agent artifacts
-    artifacts_directories = ["./charts", earnings_data_path, facts_data_path]
+    artifacts_directories = ["./artifacts", earnings_data_path, facts_data_path]
     for dir in artifacts_directories:
         if dir:
             create_dir(dir)
@@ -233,11 +236,13 @@ def create_sql_market_agent(
             f"Agent type {agent_type} not supported at the moment. Must be one of "
             "'openai-functions' or 'zero-shot-react-description'."
         )
-    
-    agent_executor = AgentExecutor(agent=agent, 
-                                   tools=tools, 
-                                   verbose=True, 
-                                   handle_parsing_errors=True, 
-                                   return_intermediate_steps=True)
-    
+
+    agent_executor = AgentExecutor(
+        agent=agent,
+        tools=tools,
+        verbose=True,
+        handle_parsing_errors=True,
+        return_intermediate_steps=True,
+    )
+
     return agent_executor
