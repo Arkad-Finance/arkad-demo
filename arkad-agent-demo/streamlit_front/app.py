@@ -83,7 +83,7 @@ if "agent_executor" not in st.session_state:
         sql_llm=st.session_state["sql_llm"],
         code_llm=st.session_state["code_llm"],
         agent_type=AgentType.OPENAI_FUNCTIONS,
-        # preinitialize_database=True,
+        preinitialize_database=True,
         db_connection_string=db_connection_string,
         earnings_data_path="./earnings",
         facts_data_path="./facts",
