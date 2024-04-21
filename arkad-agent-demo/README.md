@@ -4,7 +4,7 @@
 
 Welcome to the ARKAD AGENT Demo! This project is a demonstration of an AI Assistant designed for Capital Markets Investment Research. The assistant can retrieve a wide range of financial data, perform analysis, and execute SQL and Python code for complex calculations.
 
-This AI Assistant can provide company profile information, search for recent news and events, and perform analytical operations over stock market performance data stored in an SQL database. This tool for investors, financial analysts, and anyone interested in stock market research.
+This AI Assistant can provide company profile information, search for recent news and events, and perform analytical operations over stock market performance data stored in an SQL database. This tool is for investors, financial analysts, and anyone interested in stock market research.
 
 ## Note:
 
@@ -80,7 +80,7 @@ repl_tool = PythonREPLTool()
 
 ### Basic Usage
 
-- In this scenario sql*market_agent will create SQLite database on disc and upload data for stocks and bonds/macro data specified in \*\*\_sql-market-agent/sql_market_agent/agent/tools/storage/stocks.json*** and **_sql-market-agent/sql_market_agent/agent/tools/storage/macro_metrics.json_\*\*
+- In this scenario sql\*market*agent will create SQLite database on disc and upload data for stocks and bonds/macro data specified in \*\*\_sql-market-agent/sql_market_agent/agent/tools/storage/stocks.json**\* and **\_sql-market-agent/sql_market_agent/agent/tools/storage/macro_metrics.json*\*\*
 
   ```python
   import openai
@@ -198,7 +198,7 @@ repl_tool = PythonREPLTool()
 ### If you want to work with your up and running postgres or SQLite database (below is postgres example, to use SQLite simply give proper db_connection_string)
 
 - In this scenario sql market agent will connect to your database, figure out its schema and will be capable of running sql queries over your data.
-  If you want sql*market_agent to fill your database with data discussed above - set \*\*\_preinitialize_database*** to **_True_** (which is **_False_** by default). If it is **_False_** - database will be used as is. Also note **_earnings_data_path_** and **_facts_data_path_** arguments. If those are specified - **_Revenues_** data from earnings reports will be saved in those files - raw data into **_facts_data_path_** in json format and csv data for FY, Q1, Q2, Q3 and Q4 reports inside **_earnings_data_path_\*\*.
+  If you want sql\*market\*agent to fill your database with data discussed above - set \*\*\_preinitialize\*database**\* to **\_True**\* (which is **\_False**\* by default). If it is **_False_** - database will be used as is. Also note **_earnings_data_path_** and **_facts_data_path_** arguments. If those are specified - **_Revenues_** data from earnings reports will be saved in those files - raw data into **_facts_data_path_** in json format and csv data for FY, Q1, Q2, Q3 and Q4 reports inside **_earnings_data_path_\*\*.
 
   ````python
   from langchain_openai.chat_models import ChatOpenAI
